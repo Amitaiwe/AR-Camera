@@ -3,2125 +3,1058 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AR מצלמה</title>
+<title>AR מצלמה ✨</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; font-family:'Rubik',sans-serif; overflow:hidden; height:100dvh; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #0a0a0f;
-    font-family: 'Rubik', sans-serif;
-    overflow: hidden;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #app {
-    position: relative;
-    width: 100vw;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #camera-container {
-    position: relative;
-    flex: 1;
-    overflow: hidden;
-    background: #000;
-  }
+  #app { position:relative; width:100vw; height:100dvh; }
 
   #video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1); /* mirror */
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
   }
-
   #overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    pointer-events:none;
   }
 
-  /* UI top bar */
+  /* TOP BAR */
   #topbar {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
-    z-index: 10;
+    position:absolute; top:0; left:0; right:0;
+    padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(to bottom,rgba(0,0,0,0.55),transparent);
+    z-index:10;
   }
-
-  #app-title {
-    font-size: 22px;
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: -0.5px;
-  }
-
+  #app-title { font-size:20px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
   #face-status {
-    font-size: 13px;
-    color: rgba(255,255,255,0.7);
-    background: rgba(255,255,255,0.12);
-    padding: 5px 12px;
-    border-radius: 20px;
-    backdrop-filter: blur(8px);
+    font-size:12px; color:rgba(255,255,255,0.8);
+    background:rgba(255,255,255,0.13);
+    padding:5px 12px; border-radius:20px;
+    backdrop-filter:blur(8px);
   }
 
-  /* Filter selector */
+  /* FILTERS BAR */
   #filters-bar {
-    position: absolute;
-    bottom: 110px;
-    left: 0; right: 0;
-    display: flex;
-    gap: 12px;
-    padding: 0 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    z-index: 10;
-    justify-content: flex-start;
+    position:absolute; bottom:108px; left:0; right:0;
+    display:flex; gap:10px; padding:0 14px;
+    overflow-x:auto; scrollbar-width:none; z-index:10;
   }
-  #filters-bar::-webkit-scrollbar { display: none; }
+  #filters-bar::-webkit-scrollbar { display:none; }
 
   .filter-btn {
-    flex-shrink: 0;
-    width: 68px;
-    height: 68px;
-    border-radius: 18px;
-    border: 2.5px solid rgba(255,255,255,0.2);
-    background: rgba(20,20,30,0.7);
-    backdrop-filter: blur(12px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 26px;
-    color: #fff;
+    flex-shrink:0; width:64px; height:64px;
+    border-radius:16px;
+    border:2.5px solid rgba(255,255,255,0.18);
+    background:rgba(15,15,25,0.72);
+    backdrop-filter:blur(10px);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px;
+    cursor:pointer; transition:all 0.18s;
+    font-size:24px; color:#fff;
+    -webkit-tap-highlight-color:transparent;
   }
-  .filter-btn span.label {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    color: rgba(255,255,255,0.8);
-  }
+  .filter-btn span.label { font-size:9px; font-weight:700; color:rgba(255,255,255,0.8); }
   .filter-btn.active {
-    border-color: #ff3cac;
-    background: rgba(255,60,172,0.25);
-    box-shadow: 0 0 16px rgba(255,60,172,0.4);
-    transform: scale(1.08);
+    border-color:#ff3cac;
+    background:rgba(255,60,172,0.22);
+    box-shadow:0 0 14px rgba(255,60,172,0.45);
+    transform:scale(1.08);
   }
-  .filter-btn:hover { transform: scale(1.05); }
-  .filter-btn.active:hover { transform: scale(1.08); }
 
-  /* Bottom controls */
+  /* BOTTOM CONTROLS */
   #bottom-controls {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
-    z-index: 10;
-    padding-bottom: 10px;
+    position:absolute; bottom:0; left:0; right:0; height:100px;
+    display:flex; align-items:center; justify-content:center; gap:26px;
+    background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
+    z-index:10; padding-bottom:8px;
   }
-
   #capture-btn {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    border: 4px solid #fff;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(6px);
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
+    width:70px; height:70px; border-radius:50%;
+    border:4px solid #fff;
+    background:rgba(255,255,255,0.15);
+    cursor:pointer; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
   }
   #capture-btn::after {
-    content: '';
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: #fff;
-    transition: all 0.15s;
+    content:''; width:52px; height:52px;
+    border-radius:50%; background:#fff;
+    transition:all 0.12s;
   }
-  #capture-btn:active::after { width: 44px; height: 44px; }
-
+  #capture-btn:active::after { width:42px; height:42px; }
   #flip-btn, #save-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(8px);
-    color: #fff;
-    font-size: 22px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center;
+    width:46px; height:46px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(8px); color:#fff;
+    font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
   }
-  #flip-btn:active, #save-btn:active { transform: scale(0.9); }
 
-  /* Permission screen */
-  #permission-screen {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #0a0a1a 0%, #12001f 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    z-index: 100;
-    padding: 40px;
-    text-align: center;
-  }
-  #permission-screen.hidden { display: none; }
-
-  .perm-icon { font-size: 80px; }
-  .perm-title {
-    font-size: 28px;
-    font-weight: 900;
-    color: #fff;
-  }
-  .perm-text {
-    font-size: 15px;
-    color: rgba(255,255,255,0.6);
-    line-height: 1.6;
-    max-width: 280px;
-  }
-  #start-btn {
-    margin-top: 10px;
-    padding: 16px 40px;
-    border-radius: 30px;
-    border: none;
-    background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
-    color: #fff;
-    font-family: 'Rubik', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 8px 30px rgba(255,60,172,0.4);
-  }
-  #start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,60,172,0.5); }
-
-  /* Flash effect */
-  #flash {
-    position: absolute;
-    inset: 0;
-    background: #fff;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 50;
-    transition: opacity 0.1s;
-  }
-  #flash.flash-anim { opacity: 0.8; }
-
-  /* No face indicator */
-  #no-face {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: rgba(255,255,255,0.5);
-    font-size: 14px;
-    font-weight: 700;
-    text-align: center;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-    background: rgba(0,0,0,0.4);
-    padding: 10px 20px;
-    border-radius: 20px;
-    backdrop-filter: blur(8px);
-  }
-  #no-face.visible { opacity: 1; }
-
-  /* Loading */
+  /* LOADING */
   #loading {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    z-index: 90;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
+    position:absolute; inset:0;
+    background:linear-gradient(135deg,#0a0a18,#15002a);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px;
+    z-index:100;
   }
-  #loading.hidden { display: none; }
-  .spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid rgba(255,255,255,0.2);
-    border-top-color: #ff3cac;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+  #loading.hidden { display:none; }
+  #loading-emoji { font-size:64px; animation:bounce 1s infinite alternate; }
+  @keyframes bounce { from{transform:scale(1)} to{transform:scale(1.15)} }
+  #loading-text { font-size:18px; font-weight:700; color:#fff; }
+  #loading-sub { font-size:13px; color:rgba(255,255,255,0.5); }
+  .bar-wrap {
+    width:200px; height:6px;
+    background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  #progress-bar {
+    height:100%; width:0%; border-radius:3px;
+    background:linear-gradient(90deg,#ff3cac,#784ba0,#2b86c5);
+    transition:width 0.3s;
+  }
+
+  /* FLASH */
+  #flash {
+    position:absolute; inset:0; background:#fff;
+    opacity:0; pointer-events:none; z-index:50;
+    transition:opacity 0.08s;
+  }
+  #flash.on { opacity:0.85; }
+
+  /* NO FACE */
+  #no-face {
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    color:rgba(255,255,255,0.6); font-size:13px; font-weight:700;
+    background:rgba(0,0,0,0.45); padding:9px 18px;
+    border-radius:18px; backdrop-filter:blur(8px);
+    opacity:0; transition:opacity 0.3s; pointer-events:none;
+    white-space:nowrap;
+  }
+  #no-face.show { opacity:1; }
+
+  /* PERMISSION */
+  #permission-screen {
+    position:absolute; inset:0;
+    background:linear-gradient(135deg,#0a0a18 0%,#15002a 100%);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:18px; z-index:200; padding:40px; text-align:center;
+  }
+  #permission-screen.hidden { display:none; }
+  .perm-icon { font-size:72px; }
+  .perm-title { font-size:26px; font-weight:900; color:#fff; }
+  .perm-desc { font-size:14px; color:rgba(255,255,255,0.55); line-height:1.6; max-width:270px; }
+  #start-btn {
+    margin-top:8px; padding:15px 38px;
+    border-radius:28px; border:none;
+    background:linear-gradient(135deg,#ff3cac,#784ba0,#2b86c5);
+    color:#fff; font-family:'Rubik',sans-serif;
+    font-size:17px; font-weight:700; cursor:pointer;
+    box-shadow:0 8px 28px rgba(255,60,172,0.4);
+    transition:all 0.2s;
+  }
+  #start-btn:active { transform:scale(0.96); }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Permission Screen -->
+  <!-- Permission -->
   <div id="permission-screen">
     <div class="perm-icon">📸</div>
-    <div class="perm-title">AR מצלמה</div>
-    <div class="perm-text">אפליקציה זו תפתח את המצלמה שלך ותוסיף אפקטים מגניבים לפנים שלך בזמן אמת!</div>
-    <button id="start-btn" onclick="startCamera()">פתח מצלמה</button>
+    <div class="perm-title">AR מצלמה ✨</div>
+    <div class="perm-desc">אפקטים מגניבים על הפנים שלך בזמן אמת!</div>
+    <button id="start-btn" onclick="init()">פתח מצלמה 🎉</button>
   </div>
 
-  <!-- Camera -->
-  <div id="camera-container">
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="overlay"></canvas>
-    <div id="flash"></div>
-    <div id="no-face">📷 הצב את הפנים במרכז המסך</div>
-    <div id="loading"><div class="spinner"></div>טוען זיהוי פנים...</div>
+  <!-- Loading -->
+  <div id="loading">
+    <div id="loading-emoji">🤳</div>
+    <div id="loading-text">טוען...</div>
+    <div id="loading-sub">רק רגע אחד</div>
+    <div class="bar-wrap"><div id="progress-bar"></div></div>
+  </div>
 
-    <!-- Top bar -->
-    <div id="topbar">
-      <div id="app-title">✨ AR מצלמה</div>
-      <div id="face-status">מחפש פנים...</div>
-    </div>
+  <video id="video" autoplay muted playsinline></video>
+  <canvas id="overlay"></canvas>
+  <div id="flash"></div>
+  <div id="no-face">📷 הצב את הפנים במסגרת</div>
 
-    <!-- Filters -->
-    <div id="filters-bar">
-      <div class="filter-btn active" onclick="setFilter('none')" data-filter="none">
-        <span>🚫</span><span class="label">ללא</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('mustache')" data-filter="mustache">
-        <span>👨</span><span class="label">שפם</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('glasses')" data-filter="glasses">
-        <span>🕶️</span><span class="label">משקפיים</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('nose')" data-filter="nose">
-        <span>🐽</span><span class="label">אף כלב</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('clown')" data-filter="clown">
-        <span>🤡</span><span class="label">ליצן</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('alien')" data-filter="alien">
-        <span>👽</span><span class="label">חייזר</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('crown')" data-filter="crown">
-        <span>👑</span><span class="label">כתר</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('fire')" data-filter="fire">
-        <span>🔥</span><span class="label">אש</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('nerd')" data-filter="nerd">
-        <span>🤓</span><span class="label">נרד</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('bunny')" data-filter="bunny">
-        <span>🐰</span><span class="label">ארנב</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('unicorn')" data-filter="unicorn">
-        <span>🦄</span><span class="label">חד קרן</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('butterfly')" data-filter="butterfly">
-        <span>🦋</span><span class="label">פרפר</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('flowers')" data-filter="flowers">
-        <span>🌸</span><span class="label">פרחים</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('hearts')" data-filter="hearts">
-        <span>💖</span><span class="label">לבבות</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('rainbow')" data-filter="rainbow">
-        <span>🌈</span><span class="label">קשת</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('catgirl')" data-filter="catgirl">
-        <span>🐱</span><span class="label">חתולה</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('fairy')" data-filter="fairy">
-        <span>🧚</span><span class="label">פיה</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('stars')" data-filter="stars">
-        <span>⭐</span><span class="label">כוכבים</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('tiara')" data-filter="tiara">
-        <span>👸</span><span class="label">נסיכה</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('mermaid')" data-filter="mermaid">
-        <span>🧜</span><span class="label">בת ים</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('glitter')" data-filter="glitter">
-        <span>✨</span><span class="label">גליטר</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('kawaii')" data-filter="kawaii">
-        <span>🥺</span><span class="label">קוואי</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('disco')" data-filter="disco">
-        <span>🪩</span><span class="label">דיסקו</span>
-      </div>
-      <div class="filter-btn" onclick="setFilter('bear')" data-filter="bear">
-        <span>🐻</span><span class="label">דובי</span>
-      </div>
-    </div>
+  <div id="topbar">
+    <div id="app-title">✨ AR מצלמה</div>
+    <div id="face-status">ממתין...</div>
+  </div>
 
-    <!-- Bottom Controls -->
-    <div id="bottom-controls">
-      <button id="flip-btn" onclick="flipCamera()">🔄</button>
-      <button id="capture-btn" onclick="capturePhoto()"></button>
-      <button id="save-btn" onclick="savePhoto()">💾</button>
-    </div>
+  <div id="filters-bar">
+    <div class="filter-btn active" onclick="setFilter('none')" data-filter="none"><span>🚫</span><span class="label">ללא</span></div>
+    <div class="filter-btn" onclick="setFilter('mustache')" data-filter="mustache"><span>👨</span><span class="label">שפם</span></div>
+    <div class="filter-btn" onclick="setFilter('glasses')" data-filter="glasses"><span>🕶️</span><span class="label">משקפיים</span></div>
+    <div class="filter-btn" onclick="setFilter('nose')" data-filter="nose"><span>🐽</span><span class="label">אף כלב</span></div>
+    <div class="filter-btn" onclick="setFilter('clown')" data-filter="clown"><span>🤡</span><span class="label">ליצן</span></div>
+    <div class="filter-btn" onclick="setFilter('alien')" data-filter="alien"><span>👽</span><span class="label">חייזר</span></div>
+    <div class="filter-btn" onclick="setFilter('crown')" data-filter="crown"><span>👑</span><span class="label">כתר</span></div>
+    <div class="filter-btn" onclick="setFilter('fire')" data-filter="fire"><span>🔥</span><span class="label">אש</span></div>
+    <div class="filter-btn" onclick="setFilter('nerd')" data-filter="nerd"><span>🤓</span><span class="label">נרד</span></div>
+    <div class="filter-btn" onclick="setFilter('bunny')" data-filter="bunny"><span>🐰</span><span class="label">ארנב</span></div>
+    <div class="filter-btn" onclick="setFilter('unicorn')" data-filter="unicorn"><span>🦄</span><span class="label">חד קרן</span></div>
+    <div class="filter-btn" onclick="setFilter('butterfly')" data-filter="butterfly"><span>🦋</span><span class="label">פרפר</span></div>
+    <div class="filter-btn" onclick="setFilter('flowers')" data-filter="flowers"><span>🌸</span><span class="label">פרחים</span></div>
+    <div class="filter-btn" onclick="setFilter('hearts')" data-filter="hearts"><span>💖</span><span class="label">לבבות</span></div>
+    <div class="filter-btn" onclick="setFilter('rainbow')" data-filter="rainbow"><span>🌈</span><span class="label">קשת</span></div>
+    <div class="filter-btn" onclick="setFilter('catgirl')" data-filter="catgirl"><span>🐱</span><span class="label">חתולה</span></div>
+    <div class="filter-btn" onclick="setFilter('fairy')" data-filter="fairy"><span>🧚</span><span class="label">פיה</span></div>
+    <div class="filter-btn" onclick="setFilter('stars')" data-filter="stars"><span>⭐</span><span class="label">כוכבים</span></div>
+    <div class="filter-btn" onclick="setFilter('tiara')" data-filter="tiara"><span>👸</span><span class="label">נסיכה</span></div>
+    <div class="filter-btn" onclick="setFilter('mermaid')" data-filter="mermaid"><span>🧜</span><span class="label">בת ים</span></div>
+    <div class="filter-btn" onclick="setFilter('glitter')" data-filter="glitter"><span>✨</span><span class="label">גליטר</span></div>
+    <div class="filter-btn" onclick="setFilter('kawaii')" data-filter="kawaii"><span>🥺</span><span class="label">קוואי</span></div>
+    <div class="filter-btn" onclick="setFilter('disco')" data-filter="disco"><span>🪩</span><span class="label">דיסקו</span></div>
+    <div class="filter-btn" onclick="setFilter('bear')" data-filter="bear"><span>🐻</span><span class="label">דובי</span></div>
+    <div class="filter-btn" onclick="setFilter('devil')" data-filter="devil"><span>😈</span><span class="label">שד</span></div>
+  </div>
+
+  <div id="bottom-controls">
+    <button id="flip-btn" onclick="flipCamera()">🔄</button>
+    <button id="capture-btn" onclick="capturePhoto()"></button>
+    <button id="save-btn" onclick="savePhoto()">💾</button>
   </div>
 </div>
 
-<script>
-// =====================
-// State
-// =====================
+<script type="module">
+import vision from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm';
+const { FaceLandmarker, FilesetResolver, DrawingUtils } = vision;
+
+// ── STATE ──────────────────────────────────────────────
 let video, canvas, ctx;
+let faceLandmarker = null;
 let currentFilter = 'none';
 let facingMode = 'user';
 let stream = null;
-let animFrame = null;
-let lastFaces = [];
-let detector = null;
-let detectorReady = false;
-let noFaceTimer = null;
-let lastCapturedCanvas = null;
+let lastCaptured = null;
+let lastResults = null;
+let running = false;
 
-// =====================
-// Init
-// =====================
-async function startCamera() {
+// ── BOOT ───────────────────────────────────────────────
+async function init() {
   document.getElementById('permission-screen').classList.add('hidden');
-  video = document.getElementById('video');
+  video  = document.getElementById('video');
   canvas = document.getElementById('overlay');
-  ctx = canvas.getContext('2d');
+  ctx    = canvas.getContext('2d');
+  window.addEventListener('resize', resizeCanvas);
 
+  setProgress(10, '📷 פותח מצלמה...');
   await openCamera();
-  await loadDetector();
-  startRenderLoop();
+  setProgress(40, '🧠 טוען זיהוי פנים...');
+  await loadLandmarker();
+  setProgress(100, '✅ מוכן!');
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('hidden');
+    running = true;
+    requestAnimationFrame(renderLoop);
+  }, 400);
+}
+window.init = init;
+
+function setProgress(pct, text) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('loading-text').textContent = text;
 }
 
+// ── CAMERA ─────────────────────────────────────────────
 async function openCamera() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); }
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
-    });
-    video.srcObject = stream;
-    await new Promise(r => video.onloadedmetadata = r);
-    resizeCanvas();
-  } catch(e) {
-    alert('לא ניתן לגשת למצלמה: ' + e.message);
-  }
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode, width:{ideal:1280}, height:{ideal:720} },
+    audio: false
+  });
+  video.srcObject = stream;
+  await new Promise(r => { video.onloadedmetadata = r; });
+  resizeCanvas();
 }
 
 function resizeCanvas() {
-  const container = document.getElementById('camera-container');
-  canvas.width = container.clientWidth;
-  canvas.height = container.clientHeight;
+  canvas.width  = video.clientWidth  || window.innerWidth;
+  canvas.height = video.clientHeight || window.innerHeight;
 }
 
-window.addEventListener('resize', resizeCanvas);
-
-// =====================
-// Face Detection - using face-api.js via CDN
-// =====================
-async function loadDetector() {
-  // Use face-api.js - lightweight and works well
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/face-api.js/0.22.2/face-api.min.js';
-  document.head.appendChild(script);
-  
-  await new Promise((resolve, reject) => {
-    script.onload = resolve;
-    script.onerror = () => {
-      // Fallback: use simple simulation
-      reject(new Error('face-api failed to load'));
-    };
+// ── MEDIAPIPE ──────────────────────────────────────────
+async function loadLandmarker() {
+  const filesetResolver = await FilesetResolver.forVisionTasks(
+    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
+  );
+  faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+    baseOptions: {
+      modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+      delegate: 'GPU'
+    },
+    outputFaceBlendshapes: false,
+    runningMode: 'VIDEO',
+    numFaces: 2
   });
+}
 
-  try {
-    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
-    detectorReady = true;
-    document.getElementById('loading').classList.add('hidden');
-    updateFaceStatus('מוכן ✓');
-  } catch(e) {
-    console.warn('face-api models failed, using fallback mode', e);
-    detectorReady = false;
-    document.getElementById('loading').classList.add('hidden');
-    updateFaceStatus('מצב הדגמה');
+// ── RENDER LOOP ────────────────────────────────────────
+let lastVideoTime = -1;
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+  if (!faceLandmarker || video.readyState < 2) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (video.currentTime !== lastVideoTime) {
+    lastVideoTime = video.currentTime;
+    lastResults = faceLandmarker.detectForVideo(video, performance.now());
+  }
+
+  const faces = lastResults?.faceLandmarks || [];
+  if (faces.length > 0) {
+    document.getElementById('face-status').textContent = faces.length > 1 ? `${faces.length} פנים ✓` : 'פנים זוהו ✓';
+    document.getElementById('no-face').classList.remove('show');
+    if (currentFilter !== 'none') faces.forEach(lm => drawFilter(lm));
+  } else {
+    document.getElementById('face-status').textContent = 'מחפש פנים...';
+    if (currentFilter !== 'none') document.getElementById('no-face').classList.add('show');
   }
 }
 
-function updateFaceStatus(text) {
-  document.getElementById('face-status').textContent = text;
+// ── LANDMARK HELPERS ───────────────────────────────────
+// MediaPipe returns normalized [0,1] coords
+function px(lm, i) {
+  // video is CSS-mirrored; flip x
+  return { x: (1 - lm[i].x) * canvas.width, y: lm[i].y * canvas.height };
+}
+function midpoint(...idxs) {
+  // helper used with already-converted screen points
+  const pts = idxs;
+  return { x: pts.reduce((s,p)=>s+p.x,0)/pts.length, y: pts.reduce((s,p)=>s+p.y,0)/pts.length };
+}
+function faceMetrics(lm) {
+  // Key landmark indices for MediaPipe 478-point model
+  const leftEye  = px(lm, 468); // left eye center (iris)
+  const rightEye = px(lm, 473); // right eye center (iris)
+  const noseTip  = px(lm, 1);
+  const chin     = px(lm, 152);
+  const topHead  = px(lm, 10);
+  const leftJaw  = px(lm, 234);
+  const rightJaw = px(lm, 454);
+  const mouthTop = px(lm, 13);
+  const mouthBot = px(lm, 14);
+  const mouthL   = px(lm, 61);
+  const mouthR   = px(lm, 291);
+
+  const fw = Math.abs(rightJaw.x - leftJaw.x);
+  const fh = Math.abs(chin.y - topHead.y);
+  const cx = (leftJaw.x + rightJaw.x) / 2;
+  return { leftEye, rightEye, noseTip, chin, topHead, leftJaw, rightJaw,
+           mouthTop, mouthBot, mouthL, mouthR, fw, fh, cx };
 }
 
-// =====================
-// Render Loop
-// =====================
-function startRenderLoop() {
-  async function loop() {
-    if (video && video.readyState === 4) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (detectorReady && currentFilter !== 'none') {
-        try {
-          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 });
-          const results = await faceapi.detectAllFaces(video, options).withFaceLandmarks(true);
-          
-          if (results.length > 0) {
-            updateFaceStatus(`${results.length} פנים זוהו ✓`);
-            showNoFace(false);
-            lastFaces = results;
-            drawFilters(results);
-          } else {
-            updateFaceStatus('מחפש פנים...');
-            showNoFace(true);
-          }
-        } catch(e) {
-          // silently continue
-        }
-      } else if (currentFilter === 'none') {
-        showNoFace(false);
-        updateFaceStatus('בחר אפקט');
-      }
-    }
-    animFrame = requestAnimationFrame(loop);
+// ── DRAW FILTER DISPATCHER ─────────────────────────────
+function drawFilter(lm) {
+  const m = faceMetrics(lm);
+  switch(currentFilter) {
+    case 'mustache':  drawMustache(m); break;
+    case 'glasses':   drawGlasses(m); break;
+    case 'nose':      drawDogNose(m); break;
+    case 'clown':     drawClown(m); break;
+    case 'alien':     drawAlien(m, lm); break;
+    case 'crown':     drawCrown(m); break;
+    case 'fire':      drawFire(m); break;
+    case 'nerd':      drawNerdGlasses(m); break;
+    case 'bunny':     drawBunny(m); break;
+    case 'unicorn':   drawUnicorn(m); break;
+    case 'butterfly': drawButterfly(m); break;
+    case 'flowers':   drawFlowers(m); break;
+    case 'hearts':    drawHearts(m); break;
+    case 'rainbow':   drawRainbow(m); break;
+    case 'catgirl':   drawCatGirl(m); break;
+    case 'fairy':     drawFairy(m); break;
+    case 'stars':     drawStarFilter(m); break;
+    case 'tiara':     drawTiara(m); break;
+    case 'mermaid':   drawMermaid(m); break;
+    case 'glitter':   drawGlitter(m); break;
+    case 'kawaii':    drawKawaii(m); break;
+    case 'disco':     drawDisco(m); break;
+    case 'bear':      drawBear(m); break;
+    case 'devil':     drawDevil(m); break;
   }
-  loop();
 }
 
-function showNoFace(show) {
-  const el = document.getElementById('no-face');
-  if (show) el.classList.add('visible');
-  else el.classList.remove('visible');
-}
-
-// =====================
-// Scale coordinates from video to canvas
-// =====================
-function scaleX(x) {
-  // video is mirrored via CSS, so we flip x
-  const vw = video.videoWidth || 640;
-  const cw = canvas.width;
-  return cw - (x / vw) * cw;
-}
-function scaleY(y) {
-  const vh = video.videoHeight || 480;
-  const ch = canvas.height;
-  return (y / vh) * ch;
-}
-function scaleDim(d, axis) {
-  if (axis === 'x') return (d / (video.videoWidth || 640)) * canvas.width;
-  return (d / (video.videoHeight || 480)) * canvas.height;
-}
-
-// =====================
-// Draw Filters
-// =====================
-function drawFilters(results) {
-  results.forEach(result => {
-    const lm = result.landmarks;
-    const pts = lm.positions;
-
-    // Key landmarks (indices for 68-point model)
-    // Jaw: 0-16, Eyebrows: 17-26, Nose: 27-35, Eyes: 36-47, Mouth: 48-67
-
-    const jawPts = pts.slice(0, 17);
-    const leftEyePts = pts.slice(36, 42);
-    const rightEyePts = pts.slice(42, 48);
-    const nosePts = pts.slice(27, 36);
-    const mouthPts = pts.slice(48, 68);
-    const leftBrowPts = pts.slice(17, 22);
-    const rightBrowPts = pts.slice(22, 27);
-
-    // Helper: center of point array
-    const center = (arr) => ({
-      x: arr.reduce((s, p) => s + p.x, 0) / arr.length,
-      y: arr.reduce((s, p) => s + p.y, 0) / arr.length
-    });
-
-    const leftEyeCenter = center(leftEyePts);
-    const rightEyeCenter = center(rightEyePts);
-    const noseCenter = center(nosePts);
-    const mouthCenter = center(mouthPts);
-    const noseTip = pts[30]; // tip of nose
-
-    // Face width approximation
-    const faceBox = result.detection.box;
-    const fw = scaleDim(faceBox.width, 'x');
-    const fh = scaleDim(faceBox.height, 'y');
-
-    switch(currentFilter) {
-      case 'mustache': drawMustache(mouthCenter, noseTip, fw); break;
-      case 'glasses': drawGlasses(leftEyeCenter, rightEyeCenter, fw); break;
-      case 'nose': drawDogNose(noseTip, fw); break;
-      case 'clown': drawClown(noseTip, mouthCenter, leftEyeCenter, rightEyeCenter, leftBrowPts, rightBrowPts, fw); break;
-      case 'alien': drawAlien(result.detection.box, fw, fh); break;
-      case 'crown': drawCrown(pts, fw, fh); break;
-      case 'fire': drawFire(pts, fw, fh); break;
-      case 'nerd': drawNerdGlasses(leftEyeCenter, rightEyeCenter, fw); break;
-      case 'bunny': drawBunny(pts, fw, fh); break;
-      case 'unicorn': drawUnicorn(pts, fw, fh); break;
-      case 'butterfly': drawButterfly(pts, fw, fh); break;
-      case 'flowers': drawFlowers(pts, fw, fh, leftEyeCenter, rightEyeCenter); break;
-      case 'hearts': drawHearts(pts, fw, fh, leftEyeCenter, rightEyeCenter); break;
-      case 'rainbow': drawRainbow(pts, fw, fh); break;
-      case 'catgirl': drawCatGirl(pts, fw, fh, noseTip, leftEyeCenter, rightEyeCenter); break;
-      case 'fairy': drawFairy(pts, fw, fh); break;
-      case 'stars': drawStarFilter(pts, fw, fh, leftEyeCenter, rightEyeCenter); break;
-      case 'tiara': drawTiara(pts, fw, fh); break;
-      case 'mermaid': drawMermaid(pts, fw, fh, leftEyeCenter, rightEyeCenter); break;
-      case 'glitter': drawGlitter(pts, fw, fh); break;
-      case 'kawaii': drawKawaii(pts, fw, fh, noseTip, mouthCenter, leftEyeCenter, rightEyeCenter); break;
-      case 'disco': drawDisco(pts, fw, fh); break;
-      case 'bear': drawBear(pts, fw, fh, noseTip); break;
-    }
-  });
-}
-
-// =====================
-// Filter Implementations
-// =====================
-
-function drawMustache(mouthCenter, noseTip, fw) {
-  const mx = scaleX(mouthCenter.x);
-  const my = scaleY((mouthCenter.y + noseTip.y) / 2);
-  const w = fw * 0.55;
-  const h = w * 0.45;
-
+// ── SHARED UTILS ───────────────────────────────────────
+function drawStar(x, y, pts, outer, inner, color) {
   ctx.save();
-  ctx.translate(mx, my);
-  
-  // Main mustache shape using bezier curves
+  ctx.translate(x, y);
   ctx.beginPath();
-  // Left side
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(-w*0.1, -h*0.3, -w*0.3, -h*0.8, -w*0.5, -h*0.6);
-  ctx.bezierCurveTo(-w*0.6, -h*0.5, -w*0.55, h*0.2, -w*0.3, h*0.3);
-  ctx.bezierCurveTo(-w*0.15, h*0.4, -w*0.05, h*0.1, 0, 0);
-  // Right side (mirror)
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(w*0.1, -h*0.3, w*0.3, -h*0.8, w*0.5, -h*0.6);
-  ctx.bezierCurveTo(w*0.6, -h*0.5, w*0.55, h*0.2, w*0.3, h*0.3);
-  ctx.bezierCurveTo(w*0.15, h*0.4, w*0.05, h*0.1, 0, 0);
-  
-  ctx.fillStyle = '#2d1a0e';
-  ctx.fill();
-  ctx.strokeStyle = '#1a0d05';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawGlasses(leftEye, rightEye, fw) {
-  const lx = scaleX(leftEye.x);
-  const ly = scaleY(leftEye.y);
-  const rx = scaleX(rightEye.x);
-  const ry = scaleY(rightEye.y);
-  
-  const r = fw * 0.16;
-  const angle = Math.atan2(ry - ly, rx - lx);
-
-  ctx.save();
-  ctx.strokeStyle = '#111';
-  ctx.lineWidth = fw * 0.025;
-  ctx.lineCap = 'round';
-
-  // Left lens
-  ctx.save();
-  ctx.translate(lx, ly);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, r, r*0.8, 0, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(100, 200, 255, 0.25)';
-  ctx.fill();
-  ctx.strokeStyle = '#222';
-  ctx.stroke();
-  ctx.restore();
-
-  // Right lens
-  ctx.save();
-  ctx.translate(rx, ry);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, r, r*0.8, 0, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(100, 200, 255, 0.25)';
-  ctx.fill();
-  ctx.strokeStyle = '#222';
-  ctx.stroke();
-  ctx.restore();
-
-  // Bridge
-  ctx.beginPath();
-  ctx.moveTo(lx + Math.cos(angle)*r, ly + Math.sin(angle)*r);
-  ctx.lineTo(rx - Math.cos(angle)*r, ry - Math.sin(angle)*r);
-  ctx.strokeStyle = '#222';
-  ctx.lineWidth = fw * 0.018;
-  ctx.stroke();
-
-  // Temple left (arm)
-  const perpX = -Math.sin(angle);
-  const perpY = Math.cos(angle);
-  ctx.beginPath();
-  ctx.moveTo(lx - Math.cos(angle)*r, ly - Math.sin(angle)*r);
-  ctx.lineTo(lx - Math.cos(angle)*r*2.5 + perpX*r*0.2, ly - Math.sin(angle)*r*2.5 + perpY*r*0.2);
-  ctx.stroke();
-
-  // Temple right
-  ctx.beginPath();
-  ctx.moveTo(rx + Math.cos(angle)*r, ry + Math.sin(angle)*r);
-  ctx.lineTo(rx + Math.cos(angle)*r*2.5 + perpX*r*0.2, ry + Math.sin(angle)*r*2.5 + perpY*r*0.2);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function drawDogNose(noseTip, fw) {
-  const nx = scaleX(noseTip.x);
-  const ny = scaleY(noseTip.y);
-  const r = fw * 0.12;
-
-  ctx.save();
-  // Nose
-  ctx.beginPath();
-  ctx.ellipse(nx, ny, r, r * 0.7, 0, 0, Math.PI * 2);
-  const grad = ctx.createRadialGradient(nx - r*0.2, ny - r*0.2, 0, nx, ny, r);
-  grad.addColorStop(0, '#555');
-  grad.addColorStop(1, '#111');
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // Shine
-  ctx.beginPath();
-  ctx.ellipse(nx - r*0.3, ny - r*0.2, r*0.2, r*0.12, -0.5, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fill();
-
-  // Nostrils
-  ctx.beginPath();
-  ctx.ellipse(nx - r*0.3, ny + r*0.1, r*0.12, r*0.08, 0.3, 0, Math.PI*2);
-  ctx.fillStyle = '#000';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(nx + r*0.3, ny + r*0.1, r*0.12, r*0.08, -0.3, 0, Math.PI*2);
-  ctx.fill();
-
-  // Snot drop 😂
-  ctx.beginPath();
-  ctx.moveTo(nx, ny + r*0.5);
-  ctx.bezierCurveTo(nx - r*0.1, ny + r, nx + r*0.1, ny + r*1.5, nx, ny + r*1.8);
-  ctx.strokeStyle = 'rgba(100, 200, 50, 0.8)';
-  ctx.lineWidth = r * 0.25;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  // Drop tip
-  ctx.beginPath();
-  ctx.arc(nx, ny + r*1.8, r*0.15, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(100, 200, 50, 0.9)';
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function drawClown(noseTip, mouthCenter, leftEye, rightEye, leftBrow, rightBrow, fw) {
-  // Red nose
-  const nx = scaleX(noseTip.x);
-  const ny = scaleY(noseTip.y);
-  const nr = fw * 0.1;
-  ctx.save();
-  const ngrad = ctx.createRadialGradient(nx - nr*0.3, ny - nr*0.3, 0, nx, ny, nr);
-  ngrad.addColorStop(0, '#ff6b6b');
-  ngrad.addColorStop(1, '#cc0000');
-  ctx.beginPath();
-  ctx.arc(nx, ny, nr, 0, Math.PI*2);
-  ctx.fillStyle = ngrad;
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(nx - nr*0.3, ny - nr*0.3, nr*0.2, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fill();
-  ctx.restore();
-
-  // Painted smile
-  const mx = scaleX(mouthCenter.x);
-  const my = scaleY(mouthCenter.y);
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(mx - fw*0.25, my - fw*0.05);
-  ctx.bezierCurveTo(mx - fw*0.15, my + fw*0.1, mx + fw*0.15, my + fw*0.1, mx + fw*0.25, my - fw*0.05);
-  ctx.strokeStyle = '#cc0000';
-  ctx.lineWidth = fw * 0.03;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  ctx.restore();
-
-  // Star eyes
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y);
-    drawStar(ex, ey, 5, fw*0.12, fw*0.06, '#FFD700');
-  });
-
-  // Painted eyebrows
-  const colors = ['#cc0000', '#0066cc'];
-  [leftBrow, rightBrow].forEach((brow, i) => {
-    const b0 = brow[0], b4 = brow[brow.length-1];
-    const bx1 = scaleX(b0.x), by1 = scaleY(b0.y);
-    const bx2 = scaleX(b4.x), by2 = scaleY(b4.y);
-    const mid = {x: (bx1+bx2)/2, y: Math.min(by1,by2) - fw*0.08};
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(bx1, by1);
-    ctx.quadraticCurveTo(mid.x, mid.y, bx2, by2);
-    ctx.strokeStyle = colors[i];
-    ctx.lineWidth = fw * 0.028;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
-  });
-}
-
-function drawStar(cx, cy, points, outerR, innerR, color) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.beginPath();
-  for (let i = 0; i < points * 2; i++) {
-    const r = i % 2 === 0 ? outerR : innerR;
-    const angle = (i * Math.PI) / points - Math.PI/2;
-    if (i === 0) ctx.moveTo(r * Math.cos(angle), r * Math.sin(angle));
-    else ctx.lineTo(r * Math.cos(angle), r * Math.sin(angle));
+  for (let i = 0; i < pts*2; i++) {
+    const r = i%2===0 ? outer : inner;
+    const a = i*Math.PI/pts - Math.PI/2;
+    i===0 ? ctx.moveTo(r*Math.cos(a),r*Math.sin(a)) : ctx.lineTo(r*Math.cos(a),r*Math.sin(a));
   }
   ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
+  ctx.fillStyle = color; ctx.fill();
   ctx.restore();
 }
 
-function drawAlien(box, fw, fh) {
-  const bx = scaleX(box.x + box.width);
-  const by = scaleY(box.y);
-  
-  // Green skin overlay
+function rosyCheck(ex, ey, fw) {
+  const gr = ctx.createRadialGradient(ex,ey,0,ex,ey,fw*0.12);
+  gr.addColorStop(0,'rgba(255,120,160,0.5)');
+  gr.addColorStop(1,'rgba(255,120,160,0)');
+  ctx.beginPath(); ctx.ellipse(ex,ey,fw*0.12,fw*0.08,0,0,Math.PI*2);
+  ctx.fillStyle=gr; ctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════
+// FILTER IMPLEMENTATIONS
+// ═══════════════════════════════════════════════════════
+
+function drawMustache({noseTip, mouthL, mouthR, fw}) {
+  const mx = (mouthL.x+mouthR.x)/2;
+  const my = (noseTip.y + mouthL.y) / 2;
+  const w=fw*0.52, h=w*0.42;
+  ctx.save(); ctx.translate(mx,my);
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(-w*.1,-h*.3,-w*.3,-h*.8,-w*.5,-h*.6);
+  ctx.bezierCurveTo(-w*.6,-h*.5,-w*.55,h*.2,-w*.3,h*.3);
+  ctx.bezierCurveTo(-w*.15,h*.4,-w*.05,h*.1,0,0);
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(w*.1,-h*.3,w*.3,-h*.8,w*.5,-h*.6);
+  ctx.bezierCurveTo(w*.6,-h*.5,w*.55,h*.2,w*.3,h*.3);
+  ctx.bezierCurveTo(w*.15,h*.4,w*.05,h*.1,0,0);
+  ctx.fillStyle='#2d1a0e'; ctx.fill();
+  ctx.restore();
+}
+
+function drawGlasses({leftEye,rightEye,fw}) {
+  const r=fw*0.15;
+  const angle=Math.atan2(rightEye.y-leftEye.y, rightEye.x-leftEye.x);
+  function lens(cx,cy) {
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
+    ctx.beginPath(); ctx.ellipse(0,0,r,r*.8,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(80,180,255,0.22)'; ctx.fill();
+    ctx.strokeStyle='#111'; ctx.lineWidth=fw*.026; ctx.stroke();
+    ctx.restore();
+  }
   ctx.save();
-  ctx.fillStyle = 'rgba(50, 200, 50, 0.15)';
-  ctx.fillRect(bx, by, fw, fh * 1.1);
+  lens(leftEye.x,leftEye.y); lens(rightEye.x,rightEye.y);
+  // bridge
+  const c=Math.cos(angle), s=Math.sin(angle);
+  ctx.beginPath();
+  ctx.moveTo(leftEye.x+c*r, leftEye.y+s*r);
+  ctx.lineTo(rightEye.x-c*r, rightEye.y-s*r);
+  ctx.strokeStyle='#111'; ctx.lineWidth=fw*.02; ctx.stroke();
+  // temples
+  ctx.beginPath(); ctx.moveTo(leftEye.x-c*r,leftEye.y-s*r);
+  ctx.lineTo(leftEye.x-c*r*2.5,leftEye.y-s*r*2.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rightEye.x+c*r,rightEye.y+s*r);
+  ctx.lineTo(rightEye.x+c*r*2.5,rightEye.y+s*r*2.5); ctx.stroke();
+  ctx.restore();
+}
 
-  // Big alien eyes
-  const eyeY = by + fh * 0.3;
-  const eyeW = fw * 0.22;
-  const eyeH = fw * 0.16;
+function drawDogNose({noseTip,fw}) {
+  const {x:nx,y:ny}=noseTip, r=fw*.11;
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(nx,ny,r,r*.7,0,0,Math.PI*2);
+  const g=ctx.createRadialGradient(nx-r*.2,ny-r*.2,0,nx,ny,r);
+  g.addColorStop(0,'#555'); g.addColorStop(1,'#111');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(nx-r*.3,ny-r*.2,r*.18,r*.11,-0.5,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill();
+  // snot
+  ctx.beginPath(); ctx.moveTo(nx,ny+r*.5);
+  ctx.bezierCurveTo(nx-r*.1,ny+r,nx+r*.1,ny+r*1.5,nx,ny+r*1.8);
+  ctx.strokeStyle='rgba(80,200,40,.85)'; ctx.lineWidth=r*.22; ctx.lineCap='round'; ctx.stroke();
+  ctx.beginPath(); ctx.arc(nx,ny+r*1.8,r*.14,0,Math.PI*2);
+  ctx.fillStyle='rgba(80,200,40,.9)'; ctx.fill();
+  ctx.restore();
+}
 
-  [bx + fw*0.25, bx + fw*0.65].forEach(ex => {
-    // White
-    ctx.beginPath();
-    ctx.ellipse(ex, eyeY, eyeW, eyeH, -0.2, 0, Math.PI*2);
-    ctx.fillStyle = '#000';
-    ctx.fill();
-    // Pupil gleam
-    ctx.beginPath();
-    ctx.ellipse(ex - eyeW*0.1, eyeY - eyeH*0.2, eyeW*0.2, eyeH*0.3, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(60,200,80,0.6)';
-    ctx.fill();
-    // Shine
-    ctx.beginPath();
-    ctx.arc(ex - eyeW*0.3, eyeY - eyeH*0.3, eyeW*0.1, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fill();
+function drawClown({noseTip,mouthL,mouthR,leftEye,rightEye,fw}) {
+  const {x:nx,y:ny}=noseTip, nr=fw*.09;
+  // red nose
+  ctx.save();
+  const ng=ctx.createRadialGradient(nx-nr*.3,ny-nr*.3,0,nx,ny,nr);
+  ng.addColorStop(0,'#ff6b6b'); ng.addColorStop(1,'#cc0000');
+  ctx.beginPath(); ctx.arc(nx,ny,nr,0,Math.PI*2);
+  ctx.fillStyle=ng; ctx.fill();
+  ctx.beginPath(); ctx.arc(nx-nr*.3,ny-nr*.3,nr*.18,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill();
+  ctx.restore();
+  // smile
+  const mx=(mouthL.x+mouthR.x)/2, my=(mouthL.y+mouthR.y)/2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(mx-fw*.22,my-fw*.04);
+  ctx.bezierCurveTo(mx-fw*.12,my+fw*.09,mx+fw*.12,my+fw*.09,mx+fw*.22,my-fw*.04);
+  ctx.strokeStyle='#cc0000'; ctx.lineWidth=fw*.028; ctx.lineCap='round'; ctx.stroke();
+  ctx.restore();
+  // star eyes
+  [leftEye,rightEye].forEach(e=>drawStar(e.x,e.y,5,fw*.11,fw*.05,'#FFD700'));
+}
+
+function drawAlien({topHead,leftJaw,rightJaw,leftEye,rightEye,fw,fh,cx}) {
+  const tx=topHead.x, ty=topHead.y;
+  ctx.save();
+  ctx.fillStyle='rgba(50,210,50,.13)';
+  ctx.fillRect(leftJaw.x,ty,fw,fh*1.1);
+  const eyeY=ty+fh*.28;
+  [leftEye.x,rightEye.x].forEach(ex=>{
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,fw*.19,fw*.14,-0.2,0,Math.PI*2);
+    ctx.fillStyle='#000'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(ex-fw*.06,eyeY-fw*.04,fw*.06,fw*.09,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(60,210,80,.65)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex-fw*.12,eyeY-fw*.08,fw*.04,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.7)'; ctx.fill();
   });
-
-  // Antenna
-  ctx.strokeStyle = '#2dcd2d';
-  ctx.lineWidth = fw * 0.02;
-  ctx.beginPath();
-  ctx.moveTo(bx + fw*0.5, by);
-  ctx.lineTo(bx + fw*0.5, by - fh*0.2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(bx + fw*0.5, by - fh*0.22, fw*0.04, 0, Math.PI*2);
-  ctx.fillStyle = '#afffaf';
-  ctx.fill();
-
+  // antenna
+  ctx.beginPath(); ctx.moveTo(cx,ty); ctx.lineTo(cx,ty-fh*.22);
+  ctx.strokeStyle='#2dcd2d'; ctx.lineWidth=fw*.02; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,ty-fh*.24,fw*.035,0,Math.PI*2);
+  ctx.fillStyle='#afffaf'; ctx.fill();
   ctx.restore();
 }
 
-function drawCrown(pts, fw, fh) {
-  // Crown above head - use top of landmarks
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const cw = fw * 0.95;
-  const ch = fh * 0.35;
-
-  ctx.save();
-  ctx.translate(cx, cy - ch * 0.1);
-
-  // Crown body
+function drawCrown({topHead,leftJaw,rightJaw,fw,fh,cx}) {
+  const cy=topHead.y, cw=fw*.9, ch=fh*.35;
+  ctx.save(); ctx.translate(cx,cy);
   ctx.beginPath();
-  ctx.moveTo(-cw/2, 0);
-  ctx.lineTo(-cw/2, -ch*0.5);
-  ctx.lineTo(-cw*0.3, -ch*0.8);
-  ctx.lineTo(-cw*0.1, -ch*0.4);
-  ctx.lineTo(0, -ch);
-  ctx.lineTo(cw*0.1, -ch*0.4);
-  ctx.lineTo(cw*0.3, -ch*0.8);
-  ctx.lineTo(cw/2, -ch*0.5);
-  ctx.lineTo(cw/2, 0);
-  ctx.closePath();
-
-  const grad = ctx.createLinearGradient(0, -ch, 0, 0);
-  grad.addColorStop(0, '#FFD700');
-  grad.addColorStop(0.5, '#FFA500');
-  grad.addColorStop(1, '#FF8C00');
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.strokeStyle = '#B8860B';
-  ctx.lineWidth = fw * 0.015;
-  ctx.stroke();
-
-  // Jewels
-  const jewels = [
-    { x: 0, y: -ch*0.95, r: fw*0.04, c: '#FF1493' },
-    { x: -cw*0.3, y: -ch*0.75, r: fw*0.03, c: '#00CED1' },
-    { x: cw*0.3, y: -ch*0.75, r: fw*0.03, c: '#00CED1' },
-    { x: -cw*0.15, y: -ch*0.35, r: fw*0.025, c: '#FF4500' },
-    { x: cw*0.15, y: -ch*0.35, r: fw*0.025, c: '#FF4500' },
-  ];
-  jewels.forEach(j => {
-    ctx.beginPath();
-    ctx.arc(j.x, j.y, j.r, 0, Math.PI*2);
-    ctx.fillStyle = j.c;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(j.x - j.r*0.3, j.y - j.r*0.3, j.r*0.3, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fill();
+  ctx.moveTo(-cw/2,0); ctx.lineTo(-cw/2,-ch*.5);
+  ctx.lineTo(-cw*.3,-ch*.8); ctx.lineTo(-cw*.1,-ch*.4);
+  ctx.lineTo(0,-ch); ctx.lineTo(cw*.1,-ch*.4);
+  ctx.lineTo(cw*.3,-ch*.8); ctx.lineTo(cw/2,-ch*.5);
+  ctx.lineTo(cw/2,0); ctx.closePath();
+  const g=ctx.createLinearGradient(0,-ch,0,0);
+  g.addColorStop(0,'#FFD700'); g.addColorStop(.5,'#FFA500'); g.addColorStop(1,'#FF8C00');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='#B8860B'; ctx.lineWidth=fw*.015; ctx.stroke();
+  [{x:0,y:-ch*.95,r:fw*.04,c:'#FF1493'},{x:-cw*.3,y:-ch*.75,r:fw*.03,c:'#00CED1'},
+   {x:cw*.3,y:-ch*.75,r:fw*.03,c:'#00CED1'},{x:-cw*.15,y:-ch*.35,r:fw*.025,c:'#FF4500'},
+   {x:cw*.15,y:-ch*.35,r:fw*.025,c:'#FF4500'}].forEach(j=>{
+    const gg=ctx.createRadialGradient(j.x-j.r*.3,j.y-j.r*.3,0,j.x,j.y,j.r);
+    gg.addColorStop(0,'#fff'); gg.addColorStop(.3,j.c);
+    ctx.beginPath(); ctx.arc(j.x,j.y,j.r,0,Math.PI*2); ctx.fillStyle=gg; ctx.fill();
   });
-
   ctx.restore();
 }
 
-function drawFire(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const t = Date.now() / 300;
-
+function drawFire({topHead,leftJaw,fw,fh,cx}) {
+  const cy=topHead.y, t=Date.now()/280;
   ctx.save();
-  const numFlames = 6;
-  for (let i = 0; i < numFlames; i++) {
-    const offset = (i - numFlames/2) * fw * 0.14;
-    const wave = Math.sin(t + i * 1.3) * fw * 0.04;
-    const h = fh * (0.4 + Math.sin(t * 0.7 + i) * 0.1);
-
-    const gx = cx + offset + wave;
-    const gy = cy;
-    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy - h*0.5, h);
-    grad.addColorStop(0, 'rgba(255,255,100,0.95)');
-    grad.addColorStop(0.3, 'rgba(255,140,0,0.85)');
-    grad.addColorStop(0.7, 'rgba(255,30,0,0.6)');
-    grad.addColorStop(1, 'rgba(150,0,0,0)');
-
+  for(let i=0;i<7;i++){
+    const off=(i-3)*fw*.13, wave=Math.sin(t+i*1.3)*fw*.035;
+    const h=fh*(.42+Math.sin(t*.7+i)*.1);
+    const gx=cx+off+wave, gy=cy;
+    const g=ctx.createRadialGradient(gx,gy,0,gx,gy-h*.5,h);
+    g.addColorStop(0,'rgba(255,255,100,.95)'); g.addColorStop(.3,'rgba(255,140,0,.85)');
+    g.addColorStop(.7,'rgba(255,30,0,.6)'); g.addColorStop(1,'rgba(150,0,0,0)');
     ctx.beginPath();
-    ctx.moveTo(gx - fw*0.07, gy);
-    ctx.bezierCurveTo(
-      gx - fw*0.1 + wave*0.5, gy - h*0.4,
-      gx + fw*0.05 + wave, gy - h*0.8,
-      gx + wave*0.3, gy - h
-    );
-    ctx.bezierCurveTo(
-      gx - fw*0.05, gy - h*0.8,
-      gx + fw*0.1 + wave*0.5, gy - h*0.4,
-      gx + fw*0.07, gy
-    );
-    ctx.fillStyle = grad;
-    ctx.fill();
+    ctx.moveTo(gx-fw*.06,gy);
+    ctx.bezierCurveTo(gx-fw*.09+wave*.5,gy-h*.4,gx+fw*.04+wave,gy-h*.8,gx+wave*.3,gy-h);
+    ctx.bezierCurveTo(gx-fw*.04,gy-h*.8,gx+fw*.09+wave*.5,gy-h*.4,gx+fw*.06,gy);
+    ctx.fillStyle=g; ctx.fill();
   }
   ctx.restore();
 }
 
-function drawNerdGlasses(leftEye, rightEye, fw) {
-  const lx = scaleX(leftEye.x);
-  const ly = scaleY(leftEye.y);
-  const rx = scaleX(rightEye.x);
-  const ry = scaleY(rightEye.y);
-  const r = fw * 0.15;
-  const angle = Math.atan2(ry - ly, rx - lx);
-
-  ctx.save();
-
-  // Thick black frames
-  [{ cx: lx, cy: ly }, { cx: rx, cy: ry }].forEach(pos => {
-    ctx.save();
-    ctx.translate(pos.cx, pos.cy);
-    ctx.rotate(angle);
-
-    // Frame
-    ctx.beginPath();
-    ctx.roundRect(-r, -r*0.8, r*2, r*1.6, r*0.15);
-    ctx.fillStyle = 'rgba(0,100,200,0.25)';
-    ctx.fill();
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = fw * 0.035;
-    ctx.stroke();
-
-    // Tape in middle (nerd detail) - only between lenses, skip per lens
+function drawNerdGlasses({leftEye,rightEye,fw}) {
+  const r=fw*.15, angle=Math.atan2(rightEye.y-leftEye.y,rightEye.x-leftEye.x);
+  [[leftEye.x,leftEye.y],[rightEye.x,rightEye.y]].forEach(([cx,cy])=>{
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
+    ctx.beginPath(); ctx.roundRect(-r,-r*.8,r*2,r*1.6,r*.15);
+    ctx.fillStyle='rgba(0,100,200,.22)'; ctx.fill();
+    ctx.strokeStyle='#111'; ctx.lineWidth=fw*.034; ctx.stroke();
     ctx.restore();
   });
-
-  // Bridge with tape
-  const midX = (lx + rx) / 2;
-  const midY = (ly + ry) / 2;
-  ctx.save();
-  ctx.translate(midX, midY);
-  ctx.rotate(angle);
-  ctx.fillStyle = '#f5f0e0';
-  ctx.fillRect(-fw*0.04, -fw*0.015, fw*0.08, fw*0.03);
-  ctx.strokeStyle = '#ccc';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(-fw*0.04, -fw*0.015, fw*0.08, fw*0.03);
+  const mx=(leftEye.x+rightEye.x)/2, my=(leftEye.y+rightEye.y)/2;
+  ctx.save(); ctx.translate(mx,my); ctx.rotate(angle);
+  ctx.fillStyle='#f5f0e0';
+  ctx.fillRect(-fw*.04,-fw*.014,fw*.08,fw*.028);
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.strokeRect(-fw*.04,-fw*.014,fw*.08,fw*.028);
   ctx.restore();
-
-  // Arms
-  const perpX = -Math.sin(angle);
-  const perpY = Math.cos(angle);
-  [[lx, ly, -1], [rx, ry, 1]].forEach(([x, y, dir]) => {
-    ctx.beginPath();
-    ctx.moveTo(x + dir * Math.cos(angle) * r, y + dir * Math.sin(angle) * r);
-    ctx.lineTo(x + dir * Math.cos(angle) * r * 2.8, y + dir * Math.sin(angle) * r * 2.8);
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = fw * 0.03;
-    ctx.lineCap = 'round';
-    ctx.stroke();
+  const c=Math.cos(angle), s=Math.sin(angle);
+  ctx.strokeStyle='#111'; ctx.lineWidth=fw*.028; ctx.lineCap='round';
+  [[leftEye.x,leftEye.y,-1],[rightEye.x,rightEye.y,1]].forEach(([x,y,d])=>{
+    ctx.beginPath(); ctx.moveTo(x+d*c*r,y+d*s*r);
+    ctx.lineTo(x+d*c*r*2.7,y+d*s*r*2.7); ctx.stroke();
   });
-
-  ctx.restore();
 }
 
-function drawBunny(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const earW = fw * 0.12;
-  const earH = fh * 0.6;
-
-  // Ears
-  [[-fw*0.25, 0], [fw*0.25, 0]].forEach(([ox, oy]) => {
-    ctx.save();
-    ctx.translate(cx + ox, cy);
-
-    // Outer ear
-    ctx.beginPath();
-    ctx.ellipse(0, -earH/2, earW, earH/2, 0, 0, Math.PI*2);
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fill();
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Inner ear (pink)
-    ctx.beginPath();
-    ctx.ellipse(0, -earH/2, earW*0.55, earH*0.4, 0, 0, Math.PI*2);
-    ctx.fillStyle = '#ffb6c1';
-    ctx.fill();
-
+function drawBunny({topHead,leftJaw,rightJaw,noseTip,fw,fh,cx}) {
+  const cy=topHead.y;
+  [[-fw*.25,0],[fw*.25,0]].forEach(([ox])=>{
+    ctx.save(); ctx.translate(cx+ox,cy);
+    ctx.beginPath(); ctx.ellipse(0,-fh*.28,fw*.1,fh*.3,0,0,Math.PI*2);
+    ctx.fillStyle='#f0f0f0'; ctx.fill(); ctx.strokeStyle='#ddd'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0,-fh*.28,fw*.055,fh*.22,0,0,Math.PI*2);
+    ctx.fillStyle='#ffb6c1'; ctx.fill();
     ctx.restore();
   });
-
-  // Nose
-  const noseTip = pts[30];
-  const nx = scaleX(noseTip.x);
-  const ny = scaleY(noseTip.y);
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(nx, ny, fw*0.04, fw*0.03, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#ff69b4';
-  ctx.fill();
-  ctx.restore();
-
-  // Whiskers
-  ctx.save();
-  ctx.strokeStyle = 'rgba(200,200,200,0.8)';
-  ctx.lineWidth = 1.5;
-  [[-1, -0.15], [-1, 0], [-1, 0.15], [1, -0.15], [1, 0], [1, 0.15]].forEach(([dir, ang]) => {
-    ctx.beginPath();
-    const angle = ang * Math.PI;
-    ctx.moveTo(nx, ny);
-    ctx.lineTo(nx + dir * fw * 0.25 * Math.cos(angle), ny + fw * 0.25 * Math.sin(angle));
-    ctx.stroke();
+  const {x:nx,y:ny}=noseTip;
+  ctx.beginPath(); ctx.ellipse(nx,ny,fw*.038,fw*.028,0,0,Math.PI*2);
+  ctx.fillStyle='#ff69b4'; ctx.fill();
+  ctx.strokeStyle='rgba(200,200,200,.8)'; ctx.lineWidth=1.5;
+  [[-1,-.15],[-1,0],[-1,.15],[1,-.15],[1,0],[1,.15]].forEach(([d,a])=>{
+    ctx.beginPath(); ctx.moveTo(nx,ny);
+    ctx.lineTo(nx+d*fw*.24*Math.cos(a*Math.PI),ny+fw*.24*Math.sin(a*Math.PI)); ctx.stroke();
   });
-  ctx.restore();
 }
 
-// =====================
-// NEW FILTERS
-// =====================
-
-function drawUnicorn(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const t = Date.now() / 600;
-
-  // Rainbow horn
-  ctx.save();
-  ctx.translate(cx, cy);
-  const hornH = fh * 0.55;
-  const hornW = fw * 0.07;
-  const colors = ['#ff6eb4','#ff9f40','#ffed47','#7dff7d','#6ec6ff','#c97dff'];
-  for (let i = colors.length - 1; i >= 0; i--) {
-    const seg = hornH / colors.length;
-    ctx.beginPath();
-    const frac = i / colors.length;
-    const w = hornW * (1 - frac);
-    ctx.moveTo(-w, -seg * i);
-    ctx.lineTo(w, -seg * i);
-    ctx.lineTo(0, -seg * (i + 1));
-    ctx.closePath();
-    ctx.fillStyle = colors[i];
-    ctx.fill();
+function drawUnicorn({topHead,fw,fh,cx,leftEye,rightEye}) {
+  const cy=topHead.y, t=Date.now()/600;
+  // ears
+  [[-fw*.28,0],[fw*.28,0]].forEach(([ox])=>{
+    ctx.save(); ctx.translate(cx+ox,cy);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-fw*.09,-fh*.26); ctx.lineTo(fw*.09,-fh*.26); ctx.closePath();
+    ctx.fillStyle='#ffe0f0'; ctx.fill(); ctx.strokeStyle='#ffb6d9'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-fh*.03); ctx.lineTo(-fw*.05,-fh*.19); ctx.lineTo(fw*.05,-fh*.19); ctx.closePath();
+    ctx.fillStyle='#ff80c0'; ctx.fill();
+    ctx.restore();
+  });
+  // rainbow horn
+  ctx.save(); ctx.translate(cx,cy);
+  const hornH=fh*.52, hornW=fw*.065;
+  const cols=['#ff6eb4','#ff9f40','#ffed47','#7dff7d','#6ec6ff','#c97dff'];
+  for(let i=cols.length-1;i>=0;i--){
+    const seg=hornH/cols.length, frac=i/cols.length, w=hornW*(1-frac);
+    ctx.beginPath(); ctx.moveTo(-w,-seg*i); ctx.lineTo(w,-seg*i); ctx.lineTo(0,-seg*(i+1)); ctx.closePath();
+    ctx.fillStyle=cols[i]; ctx.fill();
   }
-  // Horn shine
-  ctx.beginPath();
-  ctx.moveTo(-hornW * 0.15, 0);
-  ctx.lineTo(-hornW * 0.05, -hornH * 0.8);
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-  ctx.lineWidth = hornW * 0.2;
-  ctx.lineCap = 'round';
-  ctx.stroke();
   ctx.restore();
+  // sparkles
+  for(let i=0;i<6;i++){
+    const a=t+i*Math.PI/3, r=fw*.19;
+    drawStar(cx+Math.cos(a)*r, topHead.y-fh*.28+Math.sin(a)*r*.5, 4, fw*.022, fw*.009, '#ffecf7');
+  }
+  rosyCheck(leftEye.x,leftEye.y+fw*.18,fw);
+  rosyCheck(rightEye.x,rightEye.y+fw*.18,fw);
+}
 
-  // Pastel ears
-  [[-fw*0.28, 0], [fw*0.28, 0]].forEach(([ox]) => {
-    ctx.save();
-    ctx.translate(cx + ox, cy);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-fw*0.1, -fh*0.28);
-    ctx.lineTo(fw*0.1, -fh*0.28);
-    ctx.closePath();
-    ctx.fillStyle = '#ffe0f0';
-    ctx.fill();
-    ctx.strokeStyle = '#ffb6d9';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    // Inner ear
-    ctx.beginPath();
-    ctx.moveTo(0, -fh*0.04);
-    ctx.lineTo(-fw*0.055, -fh*0.22);
-    ctx.lineTo(fw*0.055, -fh*0.22);
-    ctx.closePath();
-    ctx.fillStyle = '#ff80c0';
-    ctx.fill();
+function drawButterfly({topHead,fw,fh,cx}) {
+  const cy=topHead.y-fh*.12, t=Date.now()/400, flutter=Math.sin(t)*.18;
+  ctx.save(); ctx.translate(cx,cy);
+  [[1,1],[-1,1]].forEach(([sx])=>{
+    ctx.save(); ctx.scale(sx,1); ctx.rotate(flutter);
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.bezierCurveTo(fw*.1,-fh*.25,fw*.5,-fh*.35,fw*.45,-fh*.1);
+    ctx.bezierCurveTo(fw*.4,fh*.05,fw*.1,fh*.1,0,0);
+    const g=ctx.createRadialGradient(fw*.2,-fh*.15,0,fw*.2,-fh*.1,fw*.3);
+    g.addColorStop(0,'#ff80c0'); g.addColorStop(.6,'#ff40a0'); g.addColorStop(1,'rgba(255,100,180,.2)');
+    ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#cc40a0'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.bezierCurveTo(fw*.1,fh*.05,fw*.35,fh*.2,fw*.25,fh*.25);
+    ctx.bezierCurveTo(fw*.1,fh*.3,-fw*.05,fh*.15,0,0);
+    ctx.fillStyle='rgba(120,60,200,.55)'; ctx.fill(); ctx.stroke();
     ctx.restore();
   });
-
-  // Sparkles around horn
-  for (let i = 0; i < 6; i++) {
-    const angle = t + i * Math.PI / 3;
-    const r = fw * 0.2;
-    const sx = cx + Math.cos(angle) * r;
-    const sy = cy - fh * 0.3 + Math.sin(angle) * r * 0.5;
-    const sr = fw * 0.025 * (0.6 + 0.4 * Math.sin(t * 2 + i));
-    drawStar(sx, sy, 4, sr, sr * 0.4, '#ffecf7');
-  }
-}
-
-function drawButterfly(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY) - fh * 0.15;
-  const t = Date.now() / 400;
-  const flutter = Math.sin(t) * 0.18;
-
-  const wingColors = [
-    ['#ff80c0','#ff40a0','rgba(255,100,180,0.3)'],
-    ['#c080ff','#8040ff','rgba(160,80,255,0.3)'],
-  ];
-
-  ctx.save();
-  ctx.translate(cx, cy);
-
-  // Right wings
-  ctx.save();
-  ctx.rotate(flutter);
-  // Upper right wing
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(fw*0.1, -fh*0.25, fw*0.5, -fh*0.35, fw*0.45, -fh*0.1);
-  ctx.bezierCurveTo(fw*0.4, fh*0.05, fw*0.1, fh*0.1, 0, 0);
-  const gR = ctx.createRadialGradient(fw*0.2, -fh*0.15, 0, fw*0.2, -fh*0.1, fw*0.3);
-  gR.addColorStop(0, wingColors[0][0]);
-  gR.addColorStop(0.6, wingColors[0][1]);
-  gR.addColorStop(1, wingColors[0][2]);
-  ctx.fillStyle = gR;
-  ctx.fill();
-  ctx.strokeStyle = '#cc40a0';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  // Lower right wing
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(fw*0.1, fh*0.05, fw*0.35, fh*0.2, fw*0.25, fh*0.25);
-  ctx.bezierCurveTo(fw*0.1, fh*0.3, -fw*0.05, fh*0.15, 0, 0);
-  ctx.fillStyle = wingColors[1][1];
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  // Left wings (mirrored)
-  ctx.save();
-  ctx.scale(-1, 1);
-  ctx.rotate(flutter);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(fw*0.1, -fh*0.25, fw*0.5, -fh*0.35, fw*0.45, -fh*0.1);
-  ctx.bezierCurveTo(fw*0.4, fh*0.05, fw*0.1, fh*0.1, 0, 0);
-  const gL = ctx.createRadialGradient(fw*0.2, -fh*0.15, 0, fw*0.2, -fh*0.1, fw*0.3);
-  gL.addColorStop(0, wingColors[0][0]);
-  gL.addColorStop(0.6, wingColors[0][1]);
-  gL.addColorStop(1, wingColors[0][2]);
-  ctx.fillStyle = gL;
-  ctx.fill();
-  ctx.strokeStyle = '#cc40a0';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(fw*0.1, fh*0.05, fw*0.35, fh*0.2, fw*0.25, fh*0.25);
-  ctx.bezierCurveTo(fw*0.1, fh*0.3, -fw*0.05, fh*0.15, 0, 0);
-  ctx.fillStyle = wingColors[1][1];
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  // Dots on wings
-  const dotPositions = [[fw*0.22, -fh*0.12], [-fw*0.22, -fh*0.12]];
-  dotPositions.forEach(([dx, dy]) => {
-    ctx.beginPath();
-    ctx.arc(dx, dy, fw*0.03, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fill();
-  });
-
   ctx.restore();
 }
 
-function drawFlowers(pts, fw, fh, leftEye, rightEye) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const t = Date.now() / 1000;
-
-  function drawFlower(x, y, r, petals, color1, color2) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(t * 0.3);
-    for (let i = 0; i < petals; i++) {
-      const a = (i / petals) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.ellipse(Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, r * 0.45, r * 0.3, a, 0, Math.PI * 2);
-      ctx.fillStyle = color1;
-      ctx.fill();
+function drawFlowers({topHead,leftJaw,rightJaw,leftEye,rightEye,fw,fh,cx}) {
+  const t=Date.now()/1000;
+  function flower(x,y,r,petals,c1,c2){
+    ctx.save(); ctx.translate(x,y); ctx.rotate(t*.3);
+    for(let i=0;i<petals;i++){
+      const a=i/petals*Math.PI*2;
+      ctx.beginPath(); ctx.ellipse(Math.cos(a)*r*.7,Math.sin(a)*r*.7,r*.44,r*.28,a,0,Math.PI*2);
+      ctx.fillStyle=c1; ctx.fill();
     }
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
-    ctx.fillStyle = color2;
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,r*.35,0,Math.PI*2); ctx.fillStyle=c2; ctx.fill();
     ctx.restore();
   }
-
-  // Flower crown along top of head
-  const numFlowers = 7;
-  for (let i = 0; i < numFlowers; i++) {
-    const t2 = i / (numFlowers - 1);
-    const fx = scaleX(leftX + (rightX - leftX) * t2);
-    const fy = scaleY(topY) - fw * 0.08;
-    const r = fw * (0.065 + 0.015 * Math.sin(t * 2 + i));
-    const flowerColors = [
-      ['#ff80c0','#ffed47'], ['#ff4fa0','#ff9f40'], ['#c060ff','#ff80c0'],
-      ['#ff9f40','#fff'], ['#7dff9d','#ffed47'], ['#6ec6ff','#fff'], ['#ff80c0','#ffed47']
-    ];
-    drawFlower(fx, fy, r, 5, flowerColors[i % flowerColors.length][0], flowerColors[i % flowerColors.length][1]);
+  const cols=[['#ff80c0','#ffed47'],['#ff4fa0','#ff9f40'],['#c060ff','#ff80c0'],
+              ['#ff9f40','#fff'],['#7dff9d','#ffed47'],['#6ec6ff','#fff'],['#ff80c0','#ffed47']];
+  for(let i=0;i<7;i++){
+    const t2=i/6;
+    const fx=leftJaw.x+(rightJaw.x-leftJaw.x)*t2;
+    const fy=topHead.y-fw*.06;
+    flower(fx,fy,fw*(0.062+.013*Math.sin(t*2+i)),5,...cols[i%cols.length]);
   }
-
-  // Rosy cheeks
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y) + fw * 0.18;
-    const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, fw * 0.12);
-    gr.addColorStop(0, 'rgba(255,130,170,0.55)');
-    gr.addColorStop(1, 'rgba(255,130,170,0)');
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, fw * 0.12, fw * 0.08, 0, 0, Math.PI * 2);
-    ctx.fillStyle = gr;
-    ctx.fill();
-  });
+  rosyCheck(leftEye.x,leftEye.y+fw*.18,fw);
+  rosyCheck(rightEye.x,rightEye.y+fw*.18,fw);
 }
 
-function drawHearts(pts, fw, fh, leftEye, rightEye) {
-  const t = Date.now() / 500;
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-
-  function drawHeart(x, y, size, color, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(x, y);
-    ctx.beginPath();
-    ctx.moveTo(0, size * 0.25);
-    ctx.bezierCurveTo(-size*0.5, -size*0.1, -size, size*0.1, 0, size);
-    ctx.bezierCurveTo(size, size*0.1, size*0.5, -size*0.1, 0, size*0.25);
-    ctx.rotate(Math.PI);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.restore();
+function drawHearts({topHead,leftJaw,rightJaw,leftEye,rightEye,fw,cx}) {
+  const t=Date.now()/500;
+  function heart(x,y,s,c,a=1){
+    ctx.save(); ctx.globalAlpha=a; ctx.translate(x,y); ctx.rotate(Math.PI);
+    ctx.beginPath(); ctx.moveTo(0,s*.25);
+    ctx.bezierCurveTo(-s*.5,-s*.1,-s,s*.1,0,s);
+    ctx.bezierCurveTo(s,s*.1,s*.5,-s*.1,0,s*.25);
+    ctx.fillStyle=c; ctx.fill(); ctx.restore();
   }
-
-  // Floating hearts
-  const heartPositions = [
-    { x: cx - fw*0.4, baseY: scaleY(topY), phase: 0 },
-    { x: cx - fw*0.2, baseY: scaleY(topY), phase: 1 },
-    { x: cx, baseY: scaleY(topY), phase: 2 },
-    { x: cx + fw*0.2, baseY: scaleY(topY), phase: 0.5 },
-    { x: cx + fw*0.4, baseY: scaleY(topY), phase: 1.5 },
-  ];
-  const hcolors = ['#ff4da6','#ff80bf','#ff1a8c','#ff99cc','#cc0066'];
-  heartPositions.forEach((h, i) => {
-    const floatY = h.baseY - fw * 0.1 * Math.sin(t + h.phase) - fw * 0.15;
-    const size = fw * (0.06 + 0.02 * Math.sin(t * 1.5 + h.phase));
-    drawHeart(h.x, floatY, size, hcolors[i], 0.85 + 0.15 * Math.sin(t + h.phase));
+  const hcols=['#ff4da6','#ff80bf','#ff1a8c','#ff99cc','#cc0066'];
+  [-fw*.4,-fw*.2,0,fw*.2,fw*.4].forEach((ox,i)=>{
+    const fy=topHead.y-fw*.13-fw*.09*Math.sin(t+i*.7);
+    heart(cx+ox,fy,fw*(0.057+0.018*Math.sin(t*1.5+i)),hcols[i],0.85+.15*Math.sin(t+i));
   });
-
-  // Heart eyes
-  [leftEye, rightEye].forEach((eye, i) => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y);
-    const s = fw * 0.1;
-    drawHeart(ex, ey, s, '#ff1a6e', 0.9);
-    // shine
-    ctx.save();
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    ctx.arc(ex - s*0.15, ey - s*0.2, s*0.15, 0, Math.PI*2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.restore();
+  // heart eyes
+  [leftEye,rightEye].forEach(e=>{
+    heart(e.x,e.y,fw*.09,'#ff1a6e',.9);
+    ctx.save(); ctx.globalAlpha=.7;
+    ctx.beginPath(); ctx.arc(e.x-fw*.015,e.y-fw*.02,fw*.014,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill(); ctx.restore();
   });
-
-  // Rosy cheeks
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y) + fw * 0.18;
-    const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, fw * 0.12);
-    gr.addColorStop(0, 'rgba(255,100,150,0.5)');
-    gr.addColorStop(1, 'rgba(255,100,150,0)');
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, fw * 0.12, fw * 0.08, 0, 0, Math.PI * 2);
-    ctx.fillStyle = gr;
-    ctx.fill();
-  });
+  rosyCheck(leftEye.x,leftEye.y+fw*.18,fw);
+  rosyCheck(rightEye.x,rightEye.y+fw*.18,fw);
 }
 
-function drawRainbow(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY) - fh * 0.05;
-  const rx = fw * 0.75;
-  const t = Date.now() / 700;
-
+function drawRainbow({topHead,leftJaw,rightJaw,fw,cx}) {
+  const cy=topHead.y, rx=fw*.72, t=Date.now()/700;
   ctx.save();
-  const rainbowColors = ['#ff0000','#ff7700','#ffff00','#00cc44','#0088ff','#6600cc','#ff00aa'];
-  rainbowColors.forEach((color, i) => {
-    const r = rx * (1 - i * 0.09);
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, Math.PI, 0);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = rx * 0.1;
-    ctx.stroke();
+  ['#ff0000','#ff7700','#ffff00','#00cc44','#0088ff','#6600cc','#ff00aa'].forEach((c,i)=>{
+    ctx.beginPath(); ctx.arc(cx,cy,rx*(1-i*.09),Math.PI,0);
+    ctx.strokeStyle=c; ctx.lineWidth=rx*.1; ctx.stroke();
   });
-
-  // Clouds on each end
-  function drawCloud(x, y, s) {
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    [[-s*0.5,0],[0,-s*0.3],[s*0.5,0],[0,s*0.2]].forEach(([dx,dy]) => {
-      ctx.beginPath();
-      ctx.arc(x+dx, y+dy, s*0.55, 0, Math.PI*2);
-      ctx.fill();
+  function cloud(x,y,s){
+    ctx.fillStyle='rgba(255,255,255,.88)';
+    [[-s*.5,0],[0,-s*.3],[s*.5,0],[0,s*.2]].forEach(([dx,dy])=>{
+      ctx.beginPath(); ctx.arc(x+dx,y+dy,s*.55,0,Math.PI*2); ctx.fill();
     });
   }
-  drawCloud(cx - rx, cy, fw * 0.1);
-  drawCloud(cx + rx, cy, fw * 0.1);
-
-  // Sparkles
-  for (let i = 0; i < 5; i++) {
-    const angle2 = t + i * 1.3;
-    const r2 = fw * 0.65;
-    const sx = cx + Math.cos(angle2) * r2 * 0.9;
-    const sy = cy - Math.abs(Math.sin(angle2)) * r2 * 0.7;
-    if (sy < cy) drawStar(sx, sy, 4, fw*0.03, fw*0.012, '#fff');
+  cloud(cx-rx,cy,fw*.09); cloud(cx+rx,cy,fw*.09);
+  for(let i=0;i<5;i++){
+    const a=t+i*1.3, sx=cx+Math.cos(a)*fw*.62, sy=cy-Math.abs(Math.sin(a))*fw*.55;
+    if(sy<cy) drawStar(sx,sy,4,fw*.028,fw*.011,'#fff');
   }
   ctx.restore();
 }
 
-function drawCatGirl(pts, fw, fh, noseTip, leftEye, rightEye) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-
-  // Cat ears
-  [[-fw*0.3, 0], [fw*0.3, 0]].forEach(([ox], i) => {
-    ctx.save();
-    ctx.translate(cx + ox, cy - fh*0.02);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(i === 0 ? -fw*0.15 : fw*0.15, -fh*0.3);
-    ctx.lineTo(i === 0 ? fw*0.07 : -fw*0.07, -fh*0.05);
-    ctx.closePath();
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fill();
-    // Inner ear
-    ctx.beginPath();
-    ctx.moveTo(0, -fh*0.02);
-    ctx.lineTo(i === 0 ? -fw*0.08 : fw*0.08, -fh*0.22);
-    ctx.lineTo(i === 0 ? fw*0.03 : -fw*0.03, -fh*0.06);
-    ctx.closePath();
-    ctx.fillStyle = '#ff80c0';
-    ctx.fill();
+function drawCatGirl({topHead,noseTip,leftEye,rightEye,fw,fh,cx}) {
+  const cy=topHead.y;
+  [[-fw*.3,0],[fw*.3,0]].forEach(([ox],i)=>{
+    ctx.save(); ctx.translate(cx+ox,cy-fh*.02);
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.lineTo(i===0?-fw*.14:fw*.14,-fh*.28);
+    ctx.lineTo(i===0?fw*.07:-fw*.07,-fh*.05); ctx.closePath();
+    ctx.fillStyle='#1a1a1a'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0,-fh*.02);
+    ctx.lineTo(i===0?-fw*.07:fw*.07,-fh*.2);
+    ctx.lineTo(i===0?fw*.03:-fw*.03,-fh*.06); ctx.closePath();
+    ctx.fillStyle='#ff80c0'; ctx.fill();
     ctx.restore();
   });
-
-  // Cat nose
-  const nx = scaleX(noseTip.x);
-  const ny = scaleY(noseTip.y);
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(nx, ny + fw*0.025);
-  ctx.lineTo(nx - fw*0.03, ny - fw*0.015);
-  ctx.lineTo(nx + fw*0.03, ny - fw*0.015);
-  ctx.closePath();
-  ctx.fillStyle = '#ff69b4';
-  ctx.fill();
-
-  // Whiskers
-  const wColors = 'rgba(0,0,0,0.7)';
-  ctx.strokeStyle = wColors;
-  ctx.lineWidth = 1.5;
-  ctx.lineCap = 'round';
-  [[-1, -0.1], [-1, 0.1], [1, -0.1], [1, 0.1]].forEach(([dir, vOff]) => {
-    ctx.beginPath();
-    ctx.moveTo(nx + dir * fw*0.04, ny + vOff*fw);
-    ctx.lineTo(nx + dir * fw*0.32, ny + vOff*fw);
-    ctx.stroke();
+  const {x:nx,y:ny}=noseTip;
+  ctx.beginPath(); ctx.moveTo(nx,ny+fw*.022); ctx.lineTo(nx-fw*.028,ny-fw*.014); ctx.lineTo(nx+fw*.028,ny-fw*.014); ctx.closePath();
+  ctx.fillStyle='#ff69b4'; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.65)'; ctx.lineWidth=1.5; ctx.lineCap='round';
+  [[-1,-.1],[-1,.1],[1,-.1],[1,.1]].forEach(([d,v])=>{
+    ctx.beginPath(); ctx.moveTo(nx+d*fw*.04,ny+v*fw);
+    ctx.lineTo(nx+d*fw*.3,ny+v*fw); ctx.stroke();
   });
-  ctx.restore();
-
-  // Slit pupils
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y);
+  [leftEye,rightEye].forEach(e=>{
     ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, fw*0.07, fw*0.1, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,200,0,0.7)';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, fw*0.02, fw*0.09, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,fw*.07,fw*.1,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,200,0,.7)'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,fw*.02,fw*.09,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,.85)'; ctx.fill();
     ctx.restore();
   });
-
-  // Rosy cheeks
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y) + fw * 0.18;
-    const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, fw * 0.11);
-    gr.addColorStop(0, 'rgba(255,130,170,0.5)');
-    gr.addColorStop(1, 'rgba(255,130,170,0)');
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, fw*0.11, fw*0.075, 0, 0, Math.PI*2);
-    ctx.fillStyle = gr;
-    ctx.fill();
-  });
+  rosyCheck(leftEye.x,leftEye.y+fw*.18,fw);
+  rosyCheck(rightEye.x,rightEye.y+fw*.18,fw);
 }
 
-function drawFairy(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const t = Date.now() / 500;
-
-  // Fairy wings on sides of face
-  const faceMidY = scaleY((topY + pts[8].y) / 2);
-  [[-1, 1], [1, -1]].forEach(([dir, curve]) => {
-    ctx.save();
-    ctx.translate(cx + dir * fw * 0.52, faceMidY);
-    ctx.rotate(dir * 0.15 + Math.sin(t + dir) * 0.08);
-    // Upper wing
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(dir*fw*0.35, -fh*0.3, dir*fw*0.55, -fh*0.15, dir*fw*0.3, fh*0.05);
-    ctx.bezierCurveTo(dir*fw*0.15, fh*0.1, 0, fh*0.05, 0, 0);
-    const wGrad = ctx.createRadialGradient(dir*fw*0.2, -fh*0.1, 0, dir*fw*0.2, 0, fw*0.35);
-    wGrad.addColorStop(0, 'rgba(200,150,255,0.6)');
-    wGrad.addColorStop(0.5, 'rgba(150,220,255,0.4)');
-    wGrad.addColorStop(1, 'rgba(255,200,255,0.1)');
-    ctx.fillStyle = wGrad;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(180,100,255,0.5)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    // Lower wing
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(dir*fw*0.25, fh*0.1, dir*fw*0.35, fh*0.25, dir*fw*0.15, fh*0.28);
-    ctx.bezierCurveTo(dir*fw*0.05, fh*0.28, 0, fh*0.15, 0, 0);
-    ctx.fillStyle = 'rgba(200,150,255,0.35)';
-    ctx.fill();
-    ctx.stroke();
+function drawFairy({topHead,chin,leftEye,rightEye,fw,fh,cx}) {
+  const faceMidY=(topHead.y+chin.y)/2, t=Date.now()/500;
+  [[-1,1],[1,-1]].forEach(([dir])=>{
+    ctx.save(); ctx.translate(cx+dir*fw*.52,faceMidY);
+    ctx.rotate(dir*.15+Math.sin(t+dir)*.08);
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.bezierCurveTo(dir*fw*.34,-fh*.28,dir*fw*.54,-fh*.14,dir*fw*.29,fh*.05);
+    ctx.bezierCurveTo(dir*fw*.14,fh*.1,0,fh*.05,0,0);
+    const g=ctx.createRadialGradient(dir*fw*.19,-fh*.1,0,dir*fw*.19,0,fw*.34);
+    g.addColorStop(0,'rgba(200,150,255,.58)'); g.addColorStop(.5,'rgba(150,220,255,.38)'); g.addColorStop(1,'rgba(255,200,255,.08)');
+    ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='rgba(180,100,255,.45)'; ctx.lineWidth=1; ctx.stroke();
     ctx.restore();
   });
-
-  // Magic sparkles
-  for (let i = 0; i < 10; i++) {
-    const angle = t * 1.2 + i * 0.63;
-    const r = fw * (0.15 + 0.5 * ((i * 0.37) % 1));
-    const sx = cx + Math.cos(angle) * r;
-    const sy = faceMidY + Math.sin(angle) * r * 0.5 - fh*0.1;
-    const ss = fw * 0.015 * (0.5 + 0.5 * Math.sin(t * 3 + i));
-    ctx.save();
-    ctx.globalAlpha = 0.7 + 0.3 * Math.sin(t * 2 + i);
-    const starColors = ['#ffecf7','#ffe0ff','#c8f0ff','#fff9c4'];
-    drawStar(sx, sy, 4, ss, ss*0.4, starColors[i % starColors.length]);
+  for(let i=0;i<10;i++){
+    const a=t*1.2+i*.63, r=fw*(.14+.48*((i*.37)%1));
+    const sx=cx+Math.cos(a)*r, sy=faceMidY+Math.sin(a)*r*.48-fh*.1;
+    const ss=fw*.014*(.5+.5*Math.sin(t*3+i));
+    ctx.save(); ctx.globalAlpha=.65+.35*Math.sin(t*2+i);
+    drawStar(sx,sy,4,ss,ss*.4,['#ffecf7','#ffe0ff','#c8f0ff','#fff9c4'][i%4]);
     ctx.restore();
   }
+  rosyCheck(leftEye.x,leftEye.y+fw*.18,fw);
+  rosyCheck(rightEye.x,rightEye.y+fw*.18,fw);
+}
 
-  // Tiara/halo
-  ctx.save();
-  ctx.translate(cx, cy - fh*0.08);
-  ctx.beginPath();
-  ctx.arc(0, 0, fw*0.35, Math.PI*1.25, Math.PI*1.75);
-  ctx.strokeStyle = 'rgba(255,215,0,0.8)';
-  ctx.lineWidth = fw*0.02;
-  ctx.stroke();
+function drawStarFilter({topHead,leftJaw,rightJaw,leftEye,rightEye,fw,fh,cx}) {
+  const t=Date.now()/400;
+  [leftEye,rightEye].forEach(e=>{
+    const s=fw*.1;
+    ctx.save(); ctx.shadowColor='#ffe600'; ctx.shadowBlur=12;
+    drawStar(e.x,e.y,5,s,s*.42,'#ffe600'); ctx.restore();
+    ctx.beginPath(); ctx.arc(e.x-s*.2,e.y-s*.25,s*.15,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.8)'; ctx.fill();
+  });
+  for(let i=0;i<8;i++){
+    const a=t*.8+i*Math.PI/4;
+    const sx=cx+Math.cos(a)*fw*.58, sy=(topHead.y+fh*.4)+Math.sin(a)*fw*.42;
+    const ss=fw*(.032+.018*Math.sin(t*3+i));
+    ctx.save(); ctx.globalAlpha=.7+.3*Math.sin(t*2+i);
+    drawStar(sx,sy,5,ss,ss*.4,['#ffe600','#ffb800','#fff9a0','#ffd700'][i%4]); ctx.restore();
+  }
+}
+
+function drawTiara({topHead,leftJaw,rightJaw,fw,fh,cx}) {
+  const cy=topHead.y, cw=fw*.88, t=Date.now()/600;
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.beginPath(); ctx.moveTo(-cw/2,0); ctx.lineTo(cw/2,0);
+  ctx.strokeStyle='#d4af37'; ctx.lineWidth=fw*.024; ctx.stroke();
+  [{x:0,h:fh*.36,c:'#FF1493'},{x:-cw*.22,h:fh*.21,c:'#00ced1'},{x:cw*.22,h:fh*.21,c:'#00ced1'},
+   {x:-cw*.4,h:fh*.13,c:'#9400d3'},{x:cw*.4,h:fh*.13,c:'#9400d3'}].forEach(p=>{
+    ctx.beginPath(); ctx.moveTo(p.x-cw*.022,0); ctx.lineTo(p.x,-p.h); ctx.lineTo(p.x+cw*.022,0);
+    const g=ctx.createLinearGradient(p.x,0,p.x,-p.h);
+    g.addColorStop(0,'#b8860b'); g.addColorStop(.5,'#ffd700'); g.addColorStop(1,'#fffacd');
+    ctx.fillStyle=g; ctx.fill();
+    const gr=fw*.048*(p.h/(fh*.36)), glow=Math.sin(t*2+p.x*.1)*.3+.7;
+    ctx.save(); ctx.shadowColor=p.c; ctx.shadowBlur=8*glow;
+    ctx.beginPath(); ctx.arc(p.x,-p.h,gr,0,Math.PI*2);
+    const gg=ctx.createRadialGradient(p.x-gr*.3,-p.h-gr*.3,0,p.x,-p.h,gr);
+    gg.addColorStop(0,'#fff'); gg.addColorStop(.3,p.c);
+    ctx.fillStyle=gg; ctx.fill(); ctx.restore();
+  });
   ctx.restore();
 }
 
-function drawStarFilter(pts, fw, fh, leftEye, rightEye) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const t = Date.now() / 400;
-
-  // Star eyes
-  [leftEye, rightEye].forEach((eye, i) => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y);
-    const s = fw * 0.11;
-    ctx.save();
-    ctx.shadowColor = '#ffe600';
-    ctx.shadowBlur = 12;
-    drawStar(ex, ey, 5, s, s*0.42, '#ffe600');
-    ctx.restore();
-    // Shine
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(ex - s*0.2, ey - s*0.25, s*0.15, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fill();
+function drawMermaid({topHead,leftJaw,rightJaw,leftEye,rightEye,fw,fh,cx}) {
+  const cy=topHead.y, t=Date.now()/600;
+  ctx.save(); ctx.translate(cx,cy);
+  [[-fw*.32,0],[0,0],[fw*.32,0]].forEach(([ox],i)=>{
+    const cols=['#ff80bf','#40c8e0','#7b5ea7'];
+    ctx.save(); ctx.translate(ox,-fw*.03);
+    ctx.beginPath(); ctx.moveTo(0,fw*.02);
+    for(let r=0;r<6;r++){
+      const a=r/6*Math.PI+Math.PI, rad=fw*.09*(1-r/10);
+      ctx.lineTo(Math.cos(a)*rad,-fw*.11+Math.sin(a)*rad*.6);
+    }
+    ctx.closePath(); ctx.fillStyle=cols[i]; ctx.fill();
     ctx.restore();
   });
-
-  // Stars orbiting head
-  for (let i = 0; i < 8; i++) {
-    const angle = t * 0.8 + i * Math.PI / 4;
-    const orbR = fw * 0.6;
-    const cx2 = scaleX((leftX + rightX) / 2);
-    const cy2 = scaleY(topY + (pts[8].y - topY)*0.4);
-    const sx = cx2 + Math.cos(angle) * orbR;
-    const sy = cy2 + Math.sin(angle) * orbR * 0.45;
-    const ss = fw * (0.035 + 0.02 * Math.sin(t * 3 + i));
-    const starCols = ['#ffe600','#ffb800','#fff9a0','#ffd700'];
-    ctx.save();
-    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 2 + i);
-    drawStar(sx, sy, 5, ss, ss*0.4, starCols[i%4]);
-    ctx.restore();
-  }
-
-  // Sparkle cheeks
-  [leftEye, rightEye].forEach((eye, i) => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y) + fw*0.19;
-    for (let j = 0; j < 3; j++) {
-      const a = t * 1.5 + j * 2.1 + i * 1.5;
-      const r2 = fw * 0.07;
-      const sx2 = ex + Math.cos(a) * r2;
-      const sy2 = ey + Math.sin(a) * r2 * 0.6;
-      drawStar(sx2, sy2, 4, fw*0.018, fw*0.007, '#ffd700');
+  ctx.restore();
+  [leftEye,rightEye].forEach(e=>{
+    const g=ctx.createRadialGradient(e.x,e.y-fw*.04,0,e.x,e.y,fw*.12);
+    g.addColorStop(0,'rgba(64,200,224,.58)'); g.addColorStop(.5,'rgba(123,94,167,.38)'); g.addColorStop(1,'rgba(255,128,191,0)');
+    ctx.beginPath(); ctx.ellipse(e.x,e.y-fw*.03,fw*.12,fw*.07,0,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+  });
+  // scales on cheeks
+  [leftEye,rightEye].forEach(e=>{
+    const ex=e.x, ey=e.y+fw*.17;
+    for(let r=0;r<3;r++) for(let c=0;c<3;c++){
+      ctx.save(); ctx.globalAlpha=.3+.3*Math.sin(t*2+r+c);
+      ctx.beginPath(); ctx.ellipse(ex+(c-1)*fw*.05,ey+(r-1)*fw*.04,fw*.027,fw*.021,.3,0,Math.PI*2);
+      ctx.fillStyle=['rgba(64,200,224,.5)','rgba(123,94,167,.5)','rgba(0,200,150,.5)'][(r+c)%3];
+      ctx.fill(); ctx.restore();
     }
   });
 }
 
-function drawTiara(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const tw = fw * 0.9;
-  const t = Date.now() / 600;
-
-  ctx.save();
-  ctx.translate(cx, cy);
-
-  // Base band
-  ctx.beginPath();
-  ctx.moveTo(-tw/2, 0);
-  ctx.lineTo(tw/2, 0);
-  ctx.strokeStyle = '#d4af37';
-  ctx.lineWidth = fw * 0.025;
-  ctx.stroke();
-
-  // Tiara points
-  const points = [
-    { x: 0, h: fh * 0.38, gem: '#ff1493' },
-    { x: -tw*0.22, h: fh * 0.22, gem: '#00ced1' },
-    { x: tw*0.22, h: fh * 0.22, gem: '#00ced1' },
-    { x: -tw*0.4, h: fh * 0.14, gem: '#9400d3' },
-    { x: tw*0.4, h: fh * 0.14, gem: '#9400d3' },
-  ];
-
-  points.forEach(p => {
-    // Stem
-    ctx.beginPath();
-    ctx.moveTo(p.x - tw*0.025, 0);
-    ctx.lineTo(p.x, -p.h);
-    ctx.lineTo(p.x + tw*0.025, 0);
-    const grad = ctx.createLinearGradient(p.x, 0, p.x, -p.h);
-    grad.addColorStop(0, '#b8860b');
-    grad.addColorStop(0.5, '#ffd700');
-    grad.addColorStop(1, '#fffacd');
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = '#b8860b';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Gem
-    const gemR = fw * 0.05 * (p.h / (fh*0.38));
-    const glow = Math.sin(t * 2 + p.x * 0.1) * 0.3 + 0.7;
-    ctx.save();
-    ctx.shadowColor = p.gem;
-    ctx.shadowBlur = 8 * glow;
-    ctx.beginPath();
-    ctx.arc(p.x, -p.h, gemR, 0, Math.PI*2);
-    const gGrad = ctx.createRadialGradient(p.x - gemR*0.3, -p.h - gemR*0.3, 0, p.x, -p.h, gemR);
-    gGrad.addColorStop(0, '#fff');
-    gGrad.addColorStop(0.3, p.gem);
-    gGrad.addColorStop(1, p.gem + '88');
-    ctx.fillStyle = gGrad;
-    ctx.fill();
-    ctx.restore();
-  });
-
-  // Decorative dots on band
-  for (let i = -4; i <= 4; i++) {
-    ctx.beginPath();
-    ctx.arc(i * tw*0.1, 0, fw*0.012, 0, Math.PI*2);
-    ctx.fillStyle = '#ffd700';
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
-function drawMermaid(pts, fw, fh, leftEye, rightEye) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-  const t = Date.now() / 600;
-
-  // Shell crown
-  ctx.save();
-  ctx.translate(cx, cy);
-  const shellColors = ['#ff80bf', '#40c8e0', '#7b5ea7'];
-  [-fw*0.32, 0, fw*0.32].forEach((ox, i) => {
-    ctx.save();
-    ctx.translate(ox, -fw*0.04);
-    // Shell shape
-    ctx.beginPath();
-    ctx.moveTo(0, fw*0.02);
-    for (let r = 0; r < 6; r++) {
-      const a = (r / 6) * Math.PI + Math.PI;
-      const rad = fw * 0.1 * (1 - r/10);
-      ctx.lineTo(Math.cos(a)*rad, -fw*0.12 + Math.sin(a)*rad*0.6);
-    }
-    ctx.closePath();
-    ctx.fillStyle = shellColors[i];
-    ctx.fill();
-    // Shell lines
-    for (let line = 1; line <= 4; line++) {
-      ctx.beginPath();
-      ctx.moveTo(0, fw*0.02);
-      const a1 = Math.PI + (line/5) * 0.4;
-      ctx.lineTo(Math.cos(a1)*fw*0.09, -fw*0.08 + Math.sin(a1)*fw*0.055);
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.restore();
-  });
-  ctx.restore();
-
-  // Iridescent eye shadow
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y);
-    const grad = ctx.createRadialGradient(ex, ey - fw*0.04, 0, ex, ey, fw*0.12);
-    grad.addColorStop(0, 'rgba(64,200,224,0.6)');
-    grad.addColorStop(0.5, 'rgba(123,94,167,0.4)');
-    grad.addColorStop(1, 'rgba(255,128,191,0)');
-    ctx.beginPath();
-    ctx.ellipse(ex, ey - fw*0.03, fw*0.12, fw*0.07, 0, 0, Math.PI*2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-  });
-
-  // Scales shimmer on cheeks
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y) + fw*0.17;
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        const scaleColors = ['rgba(64,200,224,0.5)','rgba(123,94,167,0.5)','rgba(0,200,150,0.5)'];
-        const shimmer = 0.3 + 0.3 * Math.sin(t * 2 + row + col);
-        ctx.save();
-        ctx.globalAlpha = shimmer;
-        ctx.beginPath();
-        const sx = ex + (col - 1) * fw*0.05;
-        const sy = ey + (row - 1) * fw*0.04;
-        ctx.ellipse(sx, sy, fw*0.028, fw*0.022, 0.3, 0, Math.PI*2);
-        ctx.fillStyle = scaleColors[(row+col) % 3];
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-  });
-
-  // Floating bubbles
-  for (let i = 0; i < 6; i++) {
-    const bx = scaleX(leftX) + fw * ((i * 0.37) % 1) * 1.2 - fw*0.1;
-    const by = scaleY(topY) - fw*0.1 - (((t * 0.3 + i * 0.6) % 1) * fh * 0.5);
-    const br = fw * (0.015 + 0.01 * (i % 3));
-    ctx.save();
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.arc(bx, by, br, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(64,200,224,0.8)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(bx - br*0.3, by - br*0.3, br*0.25, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fill();
+function drawGlitter({topHead,chin,leftJaw,rightJaw,fw,fh,cx}) {
+  const cy=(topHead.y+chin.y)/2, t=Date.now()/300;
+  const gcols=['#ff80c0','#ffe600','#80ffff','#ff80ff','#80ff80','#fff','#ffb3de'];
+  for(let i=0;i<35;i++){
+    const seed=i*137.5, a=seed%360*Math.PI/180;
+    const dist=fw*.18+(seed%50)/50*fw*.58;
+    const gx=cx+Math.cos(a+t*.1)*dist, gy=cy+Math.sin(a+t*.1)*dist*.62;
+    const gs=fw*(.009+(seed%3)*.007);
+    if(Math.sin(t*2+seed)<.3) continue;
+    ctx.save(); ctx.globalAlpha=.5+.5*Math.sin(t*3+i);
+    ctx.strokeStyle=gcols[i%gcols.length]; ctx.lineWidth=gs*.8; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(gx-gs*2,gy); ctx.lineTo(gx+gs*2,gy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx,gy-gs*2); ctx.lineTo(gx,gy+gs*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx-gs,gy-gs); ctx.lineTo(gx+gs,gy+gs); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx+gs,gy-gs); ctx.lineTo(gx-gs,gy+gs); ctx.stroke();
     ctx.restore();
   }
 }
 
-function drawGlitter(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY + (pts[8].y - topY) * 0.5);
-  const t = Date.now() / 300;
-
-  // Scattered glitter all around face
-  const glitterColors = ['#ff80c0','#ffe600','#80ffff','#ff80ff','#80ff80','#ffffff','#ffb3de'];
-  for (let i = 0; i < 35; i++) {
-    const seed = i * 137.5;
-    const angle = (seed % 360) * Math.PI / 180;
-    const dist = fw * 0.2 + (seed % 50) / 50 * fw * 0.6;
-    const gx = cx + Math.cos(angle + t * 0.1) * dist;
-    const gy = cy + Math.sin(angle + t * 0.1) * dist * 0.65;
-    const gs = fw * (0.01 + (seed % 3) * 0.008);
-    const pulse = Math.sin(t * 2 + seed) > 0.3;
-    if (!pulse) continue;
+function drawKawaii({noseTip,mouthL,mouthR,leftEye,rightEye,fw}) {
+  [leftEye,rightEye].forEach((e,i)=>{
+    const er=fw*.1;
     ctx.save();
-    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 3 + i);
-    // Cross/plus glitter shape
-    ctx.strokeStyle = glitterColors[i % glitterColors.length];
-    ctx.lineWidth = gs * 0.8;
-    ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(gx - gs*2, gy); ctx.lineTo(gx + gs*2, gy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(gx, gy - gs*2); ctx.lineTo(gx, gy + gs*2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(gx - gs, gy - gs); ctx.lineTo(gx + gs, gy + gs); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(gx + gs, gy - gs); ctx.lineTo(gx - gs, gy + gs); ctx.stroke();
-    ctx.restore();
-  }
-
-  // Glitter overlay on face - gradient shimmer
-  ctx.save();
-  const faceH = scaleY(pts[8].y) - scaleY(topY);
-  const shimGrad = ctx.createLinearGradient(cx - fw/2, scaleY(topY), cx + fw/2, scaleY(pts[8].y));
-  shimGrad.addColorStop(0, 'rgba(255,150,220,0.08)');
-  shimGrad.addColorStop(0.33, 'rgba(150,220,255,0.08)');
-  shimGrad.addColorStop(0.66, 'rgba(220,150,255,0.08)');
-  shimGrad.addColorStop(1, 'rgba(255,220,150,0.08)');
-  ctx.fillStyle = shimGrad;
-  ctx.ellipse(cx, scaleY(topY) + faceH*0.5, fw*0.52, faceH*0.55, 0, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawKawaii(pts, fw, fh, noseTip, mouthCenter, leftEye, rightEye) {
-  // Big sparkly kawaii eyes
-  [leftEye, rightEye].forEach((eye, i) => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y);
-    const er = fw * 0.1;
-
-    // White of eye
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, er * 1.1, er * 1.2, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = fw * 0.018;
-    ctx.stroke();
-
-    // Iris gradient
-    const iGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, er * 0.85);
-    const eyeColors = i === 0 ? ['#ff80c0','#cc0066'] : ['#80c0ff','#0040cc'];
-    iGrad.addColorStop(0, eyeColors[0]);
-    iGrad.addColorStop(1, eyeColors[1]);
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, er*0.85, er*0.95, 0, 0, Math.PI*2);
-    ctx.fillStyle = iGrad;
-    ctx.fill();
-
-    // Pupil
-    ctx.beginPath();
-    ctx.ellipse(ex + er*0.1, ey + er*0.1, er*0.38, er*0.42, 0, 0, Math.PI*2);
-    ctx.fillStyle = '#111';
-    ctx.fill();
-
-    // Big white shine
-    ctx.beginPath();
-    ctx.ellipse(ex - er*0.3, ey - er*0.3, er*0.3, er*0.38, -0.3, 0, Math.PI*2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    // Small shine
-    ctx.beginPath();
-    ctx.arc(ex + er*0.2, ey - er*0.1, er*0.12, 0, Math.PI*2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-
-    // Star shine in eye
-    drawStar(ex - er*0.05, ey + er*0.2, 4, er*0.12, er*0.05, 'rgba(255,255,255,0.6)');
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,er*1.1,er*1.2,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fill(); ctx.strokeStyle='#333'; ctx.lineWidth=fw*.018; ctx.stroke();
+    const ig=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,er*.85);
+    ig.addColorStop(0,i===0?'#ff80c0':'#80c0ff'); ig.addColorStop(1,i===0?'#cc0066':'#0040cc');
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,er*.85,er*.95,0,0,Math.PI*2); ctx.fillStyle=ig; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.x+er*.1,e.y+er*.1,er*.38,er*.42,0,0,Math.PI*2);
+    ctx.fillStyle='#111'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.x-er*.3,e.y-er*.3,er*.28,er*.36,-0.3,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x+er*.2,e.y-er*.1,er*.11,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    drawStar(e.x-er*.05,e.y+er*.2,4,er*.11,er*.045,'rgba(255,255,255,.58)');
     ctx.restore();
   });
-
-  // Tiny star nose
-  const nx = scaleX(noseTip.x);
-  const ny = scaleY(noseTip.y);
-  drawStar(nx, ny, 4, fw*0.03, fw*0.012, '#ffb3d9');
-
-  // Kawaii blush (big round)
-  [leftEye, rightEye].forEach(eye => {
-    const ex = scaleX(eye.x);
-    const ey = scaleY(eye.y) + fw*0.2;
-    const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, fw*0.14);
-    gr.addColorStop(0, 'rgba(255,120,160,0.65)');
-    gr.addColorStop(1, 'rgba(255,120,160,0)');
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, fw*0.14, fw*0.09, 0, 0, Math.PI*2);
-    ctx.fillStyle = gr;
-    ctx.fill();
-    // Dots on blush
-    ctx.fillStyle = 'rgba(255,80,130,0.5)';
-    [-fw*0.04, 0, fw*0.04].forEach(dx => {
-      ctx.beginPath();
-      ctx.arc(ex + dx, ey, fw*0.01, 0, Math.PI*2);
-      ctx.fill();
+  const {x:nx,y:ny}=noseTip;
+  drawStar(nx,ny,4,fw*.028,fw*.011,'#ffb3d9');
+  [leftEye,rightEye].forEach(e=>{
+    const ex=e.x, ey=e.y+fw*.2;
+    const gr=ctx.createRadialGradient(ex,ey,0,ex,ey,fw*.13);
+    gr.addColorStop(0,'rgba(255,110,150,.62)'); gr.addColorStop(1,'rgba(255,110,150,0)');
+    ctx.beginPath(); ctx.ellipse(ex,ey,fw*.13,fw*.085,0,0,Math.PI*2); ctx.fillStyle=gr; ctx.fill();
+    ctx.fillStyle='rgba(255,70,120,.48)';
+    [-fw*.038,0,fw*.038].forEach(dx=>{
+      ctx.beginPath(); ctx.arc(ex+dx,ey,fw*.009,0,Math.PI*2); ctx.fill();
     });
   });
-
-  // Small UwU mouth
-  const mx = scaleX(mouthCenter.x);
-  const my = scaleY(mouthCenter.y) - fw*0.02;
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(mx - fw*0.08, my);
-  ctx.bezierCurveTo(mx - fw*0.04, my + fw*0.06, mx + fw*0.04, my + fw*0.06, mx + fw*0.08, my);
-  ctx.strokeStyle = '#cc3366';
-  ctx.lineWidth = fw*0.022;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  ctx.restore();
+  const mx=(mouthL.x+mouthR.x)/2, my=(mouthL.y+mouthR.y)/2-fw*.02;
+  ctx.beginPath(); ctx.moveTo(mx-fw*.075,my);
+  ctx.bezierCurveTo(mx-fw*.038,my+fw*.055,mx+fw*.038,my+fw*.055,mx+fw*.075,my);
+  ctx.strokeStyle='#cc3366'; ctx.lineWidth=fw*.02; ctx.lineCap='round'; ctx.stroke();
 }
 
-function drawDisco(pts, fw, fh) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY + (pts[8].y - topY) * 0.5);
-  const t = Date.now() / 200;
-
-  // Spinning disco ball above head
-  const bx = cx;
-  const by = scaleY(topY) - fh * 0.25;
-  const br = fw * 0.12;
-
+function drawDisco({topHead,chin,leftEye,rightEye,fw,fh,cx}) {
+  const faceMidY=(topHead.y+chin.y)/2, bx=cx, by=topHead.y-fh*.22, br=fw*.11, t=Date.now()/200;
   ctx.save();
-  // Light beams from disco ball
-  const numBeams = 8;
-  for (let i = 0; i < numBeams; i++) {
-    const angle = (i / numBeams) * Math.PI * 2 + t * 0.5;
-    const beamLen = fw * 0.8;
-    const hue = (i / numBeams) * 360 + t * 30;
-    ctx.save();
-    ctx.globalAlpha = 0.4;
-    const grad = ctx.createLinearGradient(bx, by, bx + Math.cos(angle)*beamLen, by + Math.sin(angle)*beamLen);
-    grad.addColorStop(0, `hsla(${hue},100%,60%,0.8)`);
-    grad.addColorStop(1, `hsla(${hue},100%,60%,0)`);
-    ctx.beginPath();
-    ctx.moveTo(bx, by);
-    ctx.lineTo(bx + Math.cos(angle)*beamLen, by + Math.sin(angle)*beamLen);
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = fw * 0.03;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
+  for(let i=0;i<8;i++){
+    const a=i/8*Math.PI*2+t*.5, len=fw*.78, h=(i/8*360+t*30)%360;
+    ctx.save(); ctx.globalAlpha=.38;
+    const g=ctx.createLinearGradient(bx,by,bx+Math.cos(a)*len,by+Math.sin(a)*len);
+    g.addColorStop(0,`hsla(${h},100%,60%,.8)`); g.addColorStop(1,`hsla(${h},100%,60%,0)`);
+    ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+Math.cos(a)*len,by+Math.sin(a)*len);
+    ctx.strokeStyle=g; ctx.lineWidth=fw*.028; ctx.lineCap='round'; ctx.stroke(); ctx.restore();
   }
-
-  // Disco ball sphere
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(bx, by, br, 0, Math.PI*2);
-  ctx.fillStyle = '#222';
-  ctx.fill();
-  // Mirror tiles on ball
-  const tileSize = br * 0.28;
-  for (let row = -3; row <= 3; row++) {
-    for (let col = -3; col <= 3; col++) {
-      const tx = bx + col * tileSize;
-      const ty = by + row * tileSize;
-      const dist = Math.sqrt((tx-bx)**2 + (ty-by)**2);
-      if (dist > br * 0.9) continue;
-      const hue2 = ((col + row + Math.floor(t)) * 40 + 180) % 360;
-      ctx.beginPath();
-      ctx.rect(tx - tileSize*0.4, ty - tileSize*0.4, tileSize*0.8, tileSize*0.8);
-      ctx.fillStyle = `hsla(${hue2},80%,70%,0.85)`;
-      ctx.fill();
-    }
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
+  const ts=br*.27;
+  for(let r=-3;r<=3;r++) for(let c=-3;c<=3;c++){
+    const tx=bx+c*ts, ty=by+r*ts;
+    if(Math.sqrt((tx-bx)**2+(ty-by)**2)>br*.9) continue;
+    const h=((c+r+Math.floor(t))*40+180)%360;
+    ctx.beginPath(); ctx.rect(tx-ts*.38,ty-ts*.38,ts*.76,ts*.76);
+    ctx.fillStyle=`hsla(${h},80%,70%,.85)`; ctx.fill();
   }
-  // Sphere outline
-  ctx.beginPath();
-  ctx.arc(bx, by, br, 0, Math.PI*2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  // Hang string
-  ctx.beginPath();
-  ctx.moveTo(bx, by - br);
-  ctx.lineTo(bx, scaleY(topY) - fw*0.05);
-  ctx.strokeStyle = 'rgba(200,200,200,0.6)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.restore();
-
-  // Color spots on face
-  for (let i = 0; i < 6; i++) {
-    const angle = t * 0.7 + i * 1.05;
-    const r = fw * 0.4;
-    const sx = cx + Math.cos(angle) * r;
-    const sy = cy + Math.sin(angle) * r * 0.5;
-    const hue3 = (i * 60 + t * 50) % 360;
-    ctx.save();
-    ctx.globalAlpha = 0.25;
-    ctx.beginPath();
-    ctx.arc(sx, sy, fw*0.08, 0, Math.PI*2);
-    ctx.fillStyle = `hsl(${hue3},100%,65%)`;
-    ctx.fill();
-    ctx.restore();
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx,by-br); ctx.lineTo(bx,topHead.y-fw*.04);
+  ctx.strokeStyle='rgba(200,200,200,.55)'; ctx.lineWidth=2; ctx.stroke();
+  for(let i=0;i<6;i++){
+    const a=t*.7+i*1.05, r=fw*.38;
+    const sx=cx+Math.cos(a)*r, sy=faceMidY+Math.sin(a)*r*.5;
+    const h=(i*60+t*50)%360;
+    ctx.save(); ctx.globalAlpha=.22;
+    ctx.beginPath(); ctx.arc(sx,sy,fw*.075,0,Math.PI*2);
+    ctx.fillStyle=`hsl(${h},100%,65%)`; ctx.fill(); ctx.restore();
   }
   ctx.restore();
 }
 
-function drawBear(pts, fw, fh, noseTip) {
-  const topY = Math.min(...pts.map(p => p.y));
-  const leftX = Math.min(...pts.map(p => p.x));
-  const rightX = Math.max(...pts.map(p => p.x));
-  const cx = scaleX((leftX + rightX) / 2);
-  const cy = scaleY(topY);
-
-  // Bear ears
-  [[-fw*0.32, 0], [fw*0.32, 0]].forEach(([ox]) => {
-    ctx.save();
-    ctx.translate(cx + ox, cy - fh*0.04);
-    // Outer ear
-    ctx.beginPath();
-    ctx.arc(0, 0, fw*0.14, 0, Math.PI*2);
-    ctx.fillStyle = '#8B5E3C';
-    ctx.fill();
-    // Inner ear
-    ctx.beginPath();
-    ctx.arc(0, 0, fw*0.08, 0, Math.PI*2);
-    ctx.fillStyle = '#c08060';
-    ctx.fill();
+function drawBear({topHead,noseTip,leftEye,rightEye,fw,fh,cx}) {
+  const cy=topHead.y;
+  [[-fw*.32,0],[fw*.32,0]].forEach(([ox])=>{
+    ctx.save(); ctx.translate(cx+ox,cy-fh*.04);
+    ctx.beginPath(); ctx.arc(0,0,fw*.13,0,Math.PI*2); ctx.fillStyle='#8B5E3C'; ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,fw*.075,0,Math.PI*2); ctx.fillStyle='#c08060'; ctx.fill();
     ctx.restore();
   });
-
-  // Bear nose/muzzle
-  const nx = scaleX(noseTip.x);
-  const ny = scaleY(noseTip.y);
-  // Muzzle (light area)
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(nx, ny + fw*0.04, fw*0.16, fw*0.12, 0, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(220,180,140,0.7)';
-  ctx.fill();
-
-  // Nose
-  ctx.beginPath();
-  ctx.ellipse(nx, ny, fw*0.06, fw*0.04, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#4a2800';
-  ctx.fill();
-  // Nose shine
-  ctx.beginPath();
-  ctx.arc(nx - fw*0.02, ny - fw*0.01, fw*0.015, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fill();
-
-  // Smile line
-  ctx.beginPath();
-  ctx.moveTo(nx, ny + fw*0.015);
-  ctx.lineTo(nx, ny + fw*0.065);
-  ctx.moveTo(nx - fw*0.06, ny + fw*0.065);
-  ctx.bezierCurveTo(nx - fw*0.04, ny + fw*0.1, nx + fw*0.04, ny + fw*0.1, nx + fw*0.06, ny + fw*0.065);
-  ctx.strokeStyle = '#4a2800';
-  ctx.lineWidth = fw * 0.018;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  ctx.restore();
-
-  // Honey pot on forehead
-  const hy = scaleY(topY) - fh*0.08;
-  ctx.save();
-  ctx.translate(cx, hy);
-  // Pot body
-  ctx.beginPath();
-  ctx.ellipse(0, 0, fw*0.08, fw*0.1, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#e8a020';
-  ctx.fill();
-  ctx.strokeStyle = '#c07010';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  // Pot label
-  ctx.fillStyle = '#c07010';
-  ctx.font = `bold ${fw*0.07}px serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText('🍯', 0, fw*0.04);
-  ctx.restore();
+  const {x:nx,y:ny}=noseTip;
+  ctx.beginPath(); ctx.ellipse(nx,ny+fw*.038,fw*.15,fw*.11,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(220,180,140,.68)'; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(nx,ny,fw*.055,fw*.038,0,0,Math.PI*2); ctx.fillStyle='#4a2800'; ctx.fill();
+  ctx.beginPath(); ctx.arc(nx-fw*.018,ny-fw*.009,fw*.013,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(nx,ny+fw*.014); ctx.lineTo(nx,ny+fw*.062);
+  ctx.moveTo(nx-fw*.055,ny+fw*.062);
+  ctx.bezierCurveTo(nx-fw*.036,ny+fw*.095,nx+fw*.036,ny+fw*.095,nx+fw*.055,ny+fw*.062);
+  ctx.strokeStyle='#4a2800'; ctx.lineWidth=fw*.017; ctx.lineCap='round'; ctx.stroke();
+  rosyCheck(leftEye.x,leftEye.y+fw*.18,fw);
+  rosyCheck(rightEye.x,rightEye.y+fw*.18,fw);
 }
 
-// =====================
-// Controls
-// =====================
+function drawDevil({topHead,leftEye,rightEye,noseTip,mouthL,mouthR,fw,fh,cx}) {
+  const cy=topHead.y, t=Date.now()/500;
+  // Devil horns
+  [[-fw*.28,0],[fw*.28,0]].forEach(([ox],i)=>{
+    ctx.save(); ctx.translate(cx+ox,cy);
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.lineTo(i===0?-fw*.08:fw*.08,-fh*.32);
+    ctx.lineTo(i===0?fw*.1:-fw*.1,-fh*.14);
+    ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,0,-fh*.32);
+    g.addColorStop(0,'#cc0000'); g.addColorStop(1,'#ff4444');
+    ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#880000'; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+  });
+  // Glowing red eyes
+  [leftEye,rightEye].forEach(e=>{
+    ctx.save();
+    ctx.shadowColor='#ff0000'; ctx.shadowBlur=14+6*Math.sin(t);
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,fw*.08,fw*.07,0,0,Math.PI*2);
+    ctx.fillStyle=`rgba(220,0,0,${0.75+0.2*Math.sin(t)})`; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.x,e.y,fw*.03,fw*.06,0,0,Math.PI*2);
+    ctx.fillStyle='#111'; ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x-fw*.025,e.y-fw*.025,fw*.016,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,100,100,.6)'; ctx.fill();
+    ctx.restore();
+  });
+  // Evil grin
+  const mx=(mouthL.x+mouthR.x)/2, my=(mouthL.y+mouthR.y)/2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(mx-fw*.24,my-fw*.04);
+  ctx.bezierCurveTo(mx-fw*.12,my+fw*.1,mx+fw*.12,my+fw*.1,mx+fw*.24,my-fw*.04);
+  ctx.strokeStyle='#cc0000'; ctx.lineWidth=fw*.028; ctx.lineCap='round'; ctx.stroke();
+  // Little fangs
+  ctx.beginPath();
+  ctx.moveTo(mx-fw*.06,my+fw*.02); ctx.lineTo(mx-fw*.04,my+fw*.07); ctx.lineTo(mx-fw*.02,my+fw*.02);
+  ctx.moveTo(mx+fw*.02,my+fw*.02); ctx.lineTo(mx+fw*.04,my+fw*.07); ctx.lineTo(mx+fw*.06,my+fw*.02);
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.restore();
+  // Fire aura around head
+  for(let i=0;i<5;i++){
+    const a=t+i*1.25, r=fw*.55;
+    const sx=cx+Math.cos(a)*r, sy=cy-fh*.1+Math.sin(a)*r*.38;
+    const ss=fw*.03*(.6+.4*Math.sin(t*2+i));
+    ctx.save(); ctx.globalAlpha=.55+.3*Math.sin(t*3+i);
+    drawStar(sx,sy,4,ss,ss*.4,'#ff3300'); ctx.restore();
+  }
+}
+
+// ── UI CONTROLS ────────────────────────────────────────
 function setFilter(name) {
   currentFilter = name;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.filter === name);
-  });
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter===name));
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
+window.setFilter = setFilter;
 
 async function flipCamera() {
-  facingMode = facingMode === 'user' ? 'environment' : 'user';
-  video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+  facingMode = facingMode==='user' ? 'environment' : 'user';
+  video.style.transform = facingMode==='user' ? 'scaleX(-1)' : 'scaleX(1)';
   await openCamera();
 }
+window.flipCamera = flipCamera;
 
 function capturePhoto() {
-  // Flash
-  const flash = document.getElementById('flash');
-  flash.classList.add('flash-anim');
-  setTimeout(() => flash.classList.remove('flash-anim'), 200);
-
-  // Composite video + canvas
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = canvas.width;
-  tempCanvas.height = canvas.height;
-  const tctx = tempCanvas.getContext('2d');
-
-  // Draw video (accounting for mirror)
-  tctx.save();
-  if (facingMode === 'user') {
-    tctx.translate(tempCanvas.width, 0);
-    tctx.scale(-1, 1);
-  }
-  tctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-  tctx.restore();
-
-  // Draw overlays
-  tctx.drawImage(canvas, 0, 0);
-
-  lastCapturedCanvas = tempCanvas;
+  document.getElementById('flash').classList.add('on');
+  setTimeout(()=>document.getElementById('flash').classList.remove('on'), 150);
+  const tmp = document.createElement('canvas');
+  tmp.width = canvas.width; tmp.height = canvas.height;
+  const tc = tmp.getContext('2d');
+  tc.save();
+  if (facingMode==='user') { tc.translate(tmp.width,0); tc.scale(-1,1); }
+  tc.drawImage(video, 0, 0, tmp.width, tmp.height);
+  tc.restore();
+  tc.drawImage(canvas, 0, 0);
+  lastCaptured = tmp;
   savePhoto();
 }
+window.capturePhoto = capturePhoto;
 
 function savePhoto() {
-  if (!lastCapturedCanvas) { capturePhoto(); return; }
-  const link = document.createElement('a');
-  link.download = `ar-photo-${Date.now()}.png`;
-  link.href = lastCapturedCanvas.toDataURL('image/png');
-  link.click();
+  if (!lastCaptured) { capturePhoto(); return; }
+  const a = document.createElement('a');
+  a.download = `ar-${Date.now()}.png`;
+  a.href = lastCaptured.toDataURL('image/png');
+  a.click();
 }
+window.savePhoto = savePhoto;
 </script>
 </body>
 </html>
