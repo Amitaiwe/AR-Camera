@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AR מצלמה</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    font-family: 'Rubik', sans-serif;
+    overflow: hidden;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app {
+    position: relative;
+    width: 100vw;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #camera-container {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* mirror */
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* UI top bar */
+  #topbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    z-index: 10;
+  }
+
+  #app-title {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  #face-status {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.12);
+    padding: 5px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Filter selector */
+  #filters-bar {
+    position: absolute;
+    bottom: 110px;
+    left: 0; right: 0;
+    display: flex;
+    gap: 12px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    z-index: 10;
+    justify-content: flex-start;
+  }
+  #filters-bar::-webkit-scrollbar { display: none; }
+
+  .filter-btn {
+    flex-shrink: 0;
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    border: 2.5px solid rgba(255,255,255,0.2);
+    background: rgba(20,20,30,0.7);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 26px;
+    color: #fff;
+  }
+  .filter-btn span.label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: rgba(255,255,255,0.8);
+  }
+  .filter-btn.active {
+    border-color: #ff3cac;
+    background: rgba(255,60,172,0.25);
+    box-shadow: 0 0 16px rgba(255,60,172,0.4);
+    transform: scale(1.08);
+  }
+  .filter-btn:hover { transform: scale(1.05); }
+  .filter-btn.active:hover { transform: scale(1.08); }
+
+  /* Bottom controls */
+  #bottom-controls {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+    z-index: 10;
+    padding-bottom: 10px;
+  }
+
+  #capture-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  #capture-btn::after {
+    content: '';
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #fff;
+    transition: all 0.15s;
+  }
+  #capture-btn:active::after { width: 44px; height: 44px; }
+
+  #flip-btn, #save-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #flip-btn:active, #save-btn:active { transform: scale(0.9); }
+
+  /* Permission screen */
+  #permission-screen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0a0a1a 0%, #12001f 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+    padding: 40px;
+    text-align: center;
+  }
+  #permission-screen.hidden { display: none; }
+
+  .perm-icon { font-size: 80px; }
+  .perm-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+  }
+  .perm-text {
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+    max-width: 280px;
+  }
+  #start-btn {
+    margin-top: 10px;
+    padding: 16px 40px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
+    color: #fff;
+    font-family: 'Rubik', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 8px 30px rgba(255,60,172,0.4);
+  }
+  #start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,60,172,0.5); }
+
+  /* Flash effect */
+  #flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 50;
+    transition: opacity 0.1s;
+  }
+  #flash.flash-anim { opacity: 0.8; }
+
+  /* No face indicator */
+  #no-face {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: rgba(0,0,0,0.4);
+    padding: 10px 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+  }
+  #no-face.visible { opacity: 1; }
+
+  /* Loading */
+  #loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 90;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  #loading.hidden { display: none; }
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top-color: #ff3cac;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Permission Screen -->
+  <div id="permission-screen">
+    <div class="perm-icon">📸</div>
+    <div class="perm-title">AR מצלמה</div>
+    <div class="perm-text">אפליקציה זו תפתח את המצלמה שלך ותוסיף אפקטים מגניבים לפנים שלך בזמן אמת!</div>
+    <button id="start-btn" onclick="startCamera()">פתח מצלמה</button>
+  </div>
+
+  <!-- Camera -->
+  <div id="camera-container">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="overlay"></canvas>
+    <div id="flash"></div>
+    <div id="no-face">📷 הצב את הפנים במרכז המסך</div>
+    <div id="loading"><div class="spinner"></div>טוען זיהוי פנים...</div>
+
+    <!-- Top bar -->
+    <div id="topbar">
+      <div id="app-title">✨ AR מצלמה</div>
+      <div id="face-status">מחפש פנים...</div>
+    </div>
+
+    <!-- Filters -->
+    <div id="filters-bar">
+      <div class="filter-btn active" onclick="setFilter('none')" data-filter="none">
+        <span>🚫</span><span class="label">ללא</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('mustache')" data-filter="mustache">
+        <span>👨</span><span class="label">שפם</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('glasses')" data-filter="glasses">
+        <span>🕶️</span><span class="label">משקפיים</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('nose')" data-filter="nose">
+        <span>🐽</span><span class="label">אף כלב</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('clown')" data-filter="clown">
+        <span>🤡</span><span class="label">ליצן</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('alien')" data-filter="alien">
+        <span>👽</span><span class="label">חייזר</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('crown')" data-filter="crown">
+        <span>👑</span><span class="label">כתר</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('fire')" data-filter="fire">
+        <span>🔥</span><span class="label">אש</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('nerd')" data-filter="nerd">
+        <span>🤓</span><span class="label">נרד</span>
+      </div>
+      <div class="filter-btn" onclick="setFilter('bunny')" data-filter="bunny">
+        <span>🐰</span><span class="label">ארנב</span>
+      </div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div id="bottom-controls">
+      <button id="flip-btn" onclick="flipCamera()">🔄</button>
+      <button id="capture-btn" onclick="capturePhoto()"></button>
+      <button id="save-btn" onclick="savePhoto()">💾</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// State
+// =====================
+let video, canvas, ctx;
+let currentFilter = 'none';
+let facingMode = 'user';
+let stream = null;
+let animFrame = null;
+let lastFaces = [];
+let detector = null;
+let detectorReady = false;
+let noFaceTimer = null;
+let lastCapturedCanvas = null;
+
+// =====================
+// Init
+// =====================
+async function startCamera() {
+  document.getElementById('permission-screen').classList.add('hidden');
+  video = document.getElementById('video');
+  canvas = document.getElementById('overlay');
+  ctx = canvas.getContext('2d');
+
+  await openCamera();
+  await loadDetector();
+  startRenderLoop();
+}
+
+async function openCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    video.srcObject = stream;
+    await new Promise(r => video.onloadedmetadata = r);
+    resizeCanvas();
+  } catch(e) {
+    alert('לא ניתן לגשת למצלמה: ' + e.message);
+  }
+}
+
+function resizeCanvas() {
+  const container = document.getElementById('camera-container');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// =====================
+// Face Detection - using face-api.js via CDN
+// =====================
+async function loadDetector() {
+  // Use face-api.js - lightweight and works well
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/face-api.js/0.22.2/face-api.min.js';
+  document.head.appendChild(script);
+  
+  await new Promise((resolve, reject) => {
+    script.onload = resolve;
+    script.onerror = () => {
+      // Fallback: use simple simulation
+      reject(new Error('face-api failed to load'));
+    };
+  });
+
+  try {
+    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
+    detectorReady = true;
+    document.getElementById('loading').classList.add('hidden');
+    updateFaceStatus('מוכן ✓');
+  } catch(e) {
+    console.warn('face-api models failed, using fallback mode', e);
+    detectorReady = false;
+    document.getElementById('loading').classList.add('hidden');
+    updateFaceStatus('מצב הדגמה');
+  }
+}
+
+function updateFaceStatus(text) {
+  document.getElementById('face-status').textContent = text;
+}
+
+// =====================
+// Render Loop
+// =====================
+function startRenderLoop() {
+  async function loop() {
+    if (video && video.readyState === 4) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (detectorReady && currentFilter !== 'none') {
+        try {
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 });
+          const results = await faceapi.detectAllFaces(video, options).withFaceLandmarks(true);
+          
+          if (results.length > 0) {
+            updateFaceStatus(`${results.length} פנים זוהו ✓`);
+            showNoFace(false);
+            lastFaces = results;
+            drawFilters(results);
+          } else {
+            updateFaceStatus('מחפש פנים...');
+            showNoFace(true);
+          }
+        } catch(e) {
+          // silently continue
+        }
+      } else if (currentFilter === 'none') {
+        showNoFace(false);
+        updateFaceStatus('בחר אפקט');
+      }
+    }
+    animFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function showNoFace(show) {
+  const el = document.getElementById('no-face');
+  if (show) el.classList.add('visible');
+  else el.classList.remove('visible');
+}
+
+// =====================
+// Scale coordinates from video to canvas
+// =====================
+function scaleX(x) {
+  // video is mirrored via CSS, so we flip x
+  const vw = video.videoWidth || 640;
+  const cw = canvas.width;
+  return cw - (x / vw) * cw;
+}
+function scaleY(y) {
+  const vh = video.videoHeight || 480;
+  const ch = canvas.height;
+  return (y / vh) * ch;
+}
+function scaleDim(d, axis) {
+  if (axis === 'x') return (d / (video.videoWidth || 640)) * canvas.width;
+  return (d / (video.videoHeight || 480)) * canvas.height;
+}
+
+// =====================
+// Draw Filters
+// =====================
+function drawFilters(results) {
+  results.forEach(result => {
+    const lm = result.landmarks;
+    const pts = lm.positions;
+
+    // Key landmarks (indices for 68-point model)
+    // Jaw: 0-16, Eyebrows: 17-26, Nose: 27-35, Eyes: 36-47, Mouth: 48-67
+
+    const jawPts = pts.slice(0, 17);
+    const leftEyePts = pts.slice(36, 42);
+    const rightEyePts = pts.slice(42, 48);
+    const nosePts = pts.slice(27, 36);
+    const mouthPts = pts.slice(48, 68);
+    const leftBrowPts = pts.slice(17, 22);
+    const rightBrowPts = pts.slice(22, 27);
+
+    // Helper: center of point array
+    const center = (arr) => ({
+      x: arr.reduce((s, p) => s + p.x, 0) / arr.length,
+      y: arr.reduce((s, p) => s + p.y, 0) / arr.length
+    });
+
+    const leftEyeCenter = center(leftEyePts);
+    const rightEyeCenter = center(rightEyePts);
+    const noseCenter = center(nosePts);
+    const mouthCenter = center(mouthPts);
+    const noseTip = pts[30]; // tip of nose
+
+    // Face width approximation
+    const faceBox = result.detection.box;
+    const fw = scaleDim(faceBox.width, 'x');
+    const fh = scaleDim(faceBox.height, 'y');
+
+    switch(currentFilter) {
+      case 'mustache': drawMustache(mouthCenter, noseTip, fw); break;
+      case 'glasses': drawGlasses(leftEyeCenter, rightEyeCenter, fw); break;
+      case 'nose': drawDogNose(noseTip, fw); break;
+      case 'clown': drawClown(noseTip, mouthCenter, leftEyeCenter, rightEyeCenter, leftBrowPts, rightBrowPts, fw); break;
+      case 'alien': drawAlien(result.detection.box, fw, fh); break;
+      case 'crown': drawCrown(pts, fw, fh); break;
+      case 'fire': drawFire(pts, fw, fh); break;
+      case 'nerd': drawNerdGlasses(leftEyeCenter, rightEyeCenter, fw); break;
+      case 'bunny': drawBunny(pts, fw, fh); break;
+    }
+  });
+}
+
+// =====================
+// Filter Implementations
+// =====================
+
+function drawMustache(mouthCenter, noseTip, fw) {
+  const mx = scaleX(mouthCenter.x);
+  const my = scaleY((mouthCenter.y + noseTip.y) / 2);
+  const w = fw * 0.55;
+  const h = w * 0.45;
+
+  ctx.save();
+  ctx.translate(mx, my);
+  
+  // Main mustache shape using bezier curves
+  ctx.beginPath();
+  // Left side
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(-w*0.1, -h*0.3, -w*0.3, -h*0.8, -w*0.5, -h*0.6);
+  ctx.bezierCurveTo(-w*0.6, -h*0.5, -w*0.55, h*0.2, -w*0.3, h*0.3);
+  ctx.bezierCurveTo(-w*0.15, h*0.4, -w*0.05, h*0.1, 0, 0);
+  // Right side (mirror)
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(w*0.1, -h*0.3, w*0.3, -h*0.8, w*0.5, -h*0.6);
+  ctx.bezierCurveTo(w*0.6, -h*0.5, w*0.55, h*0.2, w*0.3, h*0.3);
+  ctx.bezierCurveTo(w*0.15, h*0.4, w*0.05, h*0.1, 0, 0);
+  
+  ctx.fillStyle = '#2d1a0e';
+  ctx.fill();
+  ctx.strokeStyle = '#1a0d05';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGlasses(leftEye, rightEye, fw) {
+  const lx = scaleX(leftEye.x);
+  const ly = scaleY(leftEye.y);
+  const rx = scaleX(rightEye.x);
+  const ry = scaleY(rightEye.y);
+  
+  const r = fw * 0.16;
+  const angle = Math.atan2(ry - ly, rx - lx);
+
+  ctx.save();
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = fw * 0.025;
+  ctx.lineCap = 'round';
+
+  // Left lens
+  ctx.save();
+  ctx.translate(lx, ly);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r, r*0.8, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(100, 200, 255, 0.25)';
+  ctx.fill();
+  ctx.strokeStyle = '#222';
+  ctx.stroke();
+  ctx.restore();
+
+  // Right lens
+  ctx.save();
+  ctx.translate(rx, ry);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r, r*0.8, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(100, 200, 255, 0.25)';
+  ctx.fill();
+  ctx.strokeStyle = '#222';
+  ctx.stroke();
+  ctx.restore();
+
+  // Bridge
+  ctx.beginPath();
+  ctx.moveTo(lx + Math.cos(angle)*r, ly + Math.sin(angle)*r);
+  ctx.lineTo(rx - Math.cos(angle)*r, ry - Math.sin(angle)*r);
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = fw * 0.018;
+  ctx.stroke();
+
+  // Temple left (arm)
+  const perpX = -Math.sin(angle);
+  const perpY = Math.cos(angle);
+  ctx.beginPath();
+  ctx.moveTo(lx - Math.cos(angle)*r, ly - Math.sin(angle)*r);
+  ctx.lineTo(lx - Math.cos(angle)*r*2.5 + perpX*r*0.2, ly - Math.sin(angle)*r*2.5 + perpY*r*0.2);
+  ctx.stroke();
+
+  // Temple right
+  ctx.beginPath();
+  ctx.moveTo(rx + Math.cos(angle)*r, ry + Math.sin(angle)*r);
+  ctx.lineTo(rx + Math.cos(angle)*r*2.5 + perpX*r*0.2, ry + Math.sin(angle)*r*2.5 + perpY*r*0.2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawDogNose(noseTip, fw) {
+  const nx = scaleX(noseTip.x);
+  const ny = scaleY(noseTip.y);
+  const r = fw * 0.12;
+
+  ctx.save();
+  // Nose
+  ctx.beginPath();
+  ctx.ellipse(nx, ny, r, r * 0.7, 0, 0, Math.PI * 2);
+  const grad = ctx.createRadialGradient(nx - r*0.2, ny - r*0.2, 0, nx, ny, r);
+  grad.addColorStop(0, '#555');
+  grad.addColorStop(1, '#111');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Shine
+  ctx.beginPath();
+  ctx.ellipse(nx - r*0.3, ny - r*0.2, r*0.2, r*0.12, -0.5, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fill();
+
+  // Nostrils
+  ctx.beginPath();
+  ctx.ellipse(nx - r*0.3, ny + r*0.1, r*0.12, r*0.08, 0.3, 0, Math.PI*2);
+  ctx.fillStyle = '#000';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(nx + r*0.3, ny + r*0.1, r*0.12, r*0.08, -0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Snot drop 😂
+  ctx.beginPath();
+  ctx.moveTo(nx, ny + r*0.5);
+  ctx.bezierCurveTo(nx - r*0.1, ny + r, nx + r*0.1, ny + r*1.5, nx, ny + r*1.8);
+  ctx.strokeStyle = 'rgba(100, 200, 50, 0.8)';
+  ctx.lineWidth = r * 0.25;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  // Drop tip
+  ctx.beginPath();
+  ctx.arc(nx, ny + r*1.8, r*0.15, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(100, 200, 50, 0.9)';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawClown(noseTip, mouthCenter, leftEye, rightEye, leftBrow, rightBrow, fw) {
+  // Red nose
+  const nx = scaleX(noseTip.x);
+  const ny = scaleY(noseTip.y);
+  const nr = fw * 0.1;
+  ctx.save();
+  const ngrad = ctx.createRadialGradient(nx - nr*0.3, ny - nr*0.3, 0, nx, ny, nr);
+  ngrad.addColorStop(0, '#ff6b6b');
+  ngrad.addColorStop(1, '#cc0000');
+  ctx.beginPath();
+  ctx.arc(nx, ny, nr, 0, Math.PI*2);
+  ctx.fillStyle = ngrad;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(nx - nr*0.3, ny - nr*0.3, nr*0.2, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fill();
+  ctx.restore();
+
+  // Painted smile
+  const mx = scaleX(mouthCenter.x);
+  const my = scaleY(mouthCenter.y);
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(mx - fw*0.25, my - fw*0.05);
+  ctx.bezierCurveTo(mx - fw*0.15, my + fw*0.1, mx + fw*0.15, my + fw*0.1, mx + fw*0.25, my - fw*0.05);
+  ctx.strokeStyle = '#cc0000';
+  ctx.lineWidth = fw * 0.03;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.restore();
+
+  // Star eyes
+  [leftEye, rightEye].forEach(eye => {
+    const ex = scaleX(eye.x);
+    const ey = scaleY(eye.y);
+    drawStar(ex, ey, 5, fw*0.12, fw*0.06, '#FFD700');
+  });
+
+  // Painted eyebrows
+  const colors = ['#cc0000', '#0066cc'];
+  [leftBrow, rightBrow].forEach((brow, i) => {
+    const b0 = brow[0], b4 = brow[brow.length-1];
+    const bx1 = scaleX(b0.x), by1 = scaleY(b0.y);
+    const bx2 = scaleX(b4.x), by2 = scaleY(b4.y);
+    const mid = {x: (bx1+bx2)/2, y: Math.min(by1,by2) - fw*0.08};
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(bx1, by1);
+    ctx.quadraticCurveTo(mid.x, mid.y, bx2, by2);
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = fw * 0.028;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function drawStar(cx, cy, points, outerR, innerR, color) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const angle = (i * Math.PI) / points - Math.PI/2;
+    if (i === 0) ctx.moveTo(r * Math.cos(angle), r * Math.sin(angle));
+    else ctx.lineTo(r * Math.cos(angle), r * Math.sin(angle));
+  }
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawAlien(box, fw, fh) {
+  const bx = scaleX(box.x + box.width);
+  const by = scaleY(box.y);
+  
+  // Green skin overlay
+  ctx.save();
+  ctx.fillStyle = 'rgba(50, 200, 50, 0.15)';
+  ctx.fillRect(bx, by, fw, fh * 1.1);
+
+  // Big alien eyes
+  const eyeY = by + fh * 0.3;
+  const eyeW = fw * 0.22;
+  const eyeH = fw * 0.16;
+
+  [bx + fw*0.25, bx + fw*0.65].forEach(ex => {
+    // White
+    ctx.beginPath();
+    ctx.ellipse(ex, eyeY, eyeW, eyeH, -0.2, 0, Math.PI*2);
+    ctx.fillStyle = '#000';
+    ctx.fill();
+    // Pupil gleam
+    ctx.beginPath();
+    ctx.ellipse(ex - eyeW*0.1, eyeY - eyeH*0.2, eyeW*0.2, eyeH*0.3, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(60,200,80,0.6)';
+    ctx.fill();
+    // Shine
+    ctx.beginPath();
+    ctx.arc(ex - eyeW*0.3, eyeY - eyeH*0.3, eyeW*0.1, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fill();
+  });
+
+  // Antenna
+  ctx.strokeStyle = '#2dcd2d';
+  ctx.lineWidth = fw * 0.02;
+  ctx.beginPath();
+  ctx.moveTo(bx + fw*0.5, by);
+  ctx.lineTo(bx + fw*0.5, by - fh*0.2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(bx + fw*0.5, by - fh*0.22, fw*0.04, 0, Math.PI*2);
+  ctx.fillStyle = '#afffaf';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCrown(pts, fw, fh) {
+  // Crown above head - use top of landmarks
+  const topY = Math.min(...pts.map(p => p.y));
+  const leftX = Math.min(...pts.map(p => p.x));
+  const rightX = Math.max(...pts.map(p => p.x));
+  
+  const cx = scaleX((leftX + rightX) / 2);
+  const cy = scaleY(topY);
+  const cw = fw * 0.95;
+  const ch = fh * 0.35;
+
+  ctx.save();
+  ctx.translate(cx, cy - ch * 0.1);
+
+  // Crown body
+  ctx.beginPath();
+  ctx.moveTo(-cw/2, 0);
+  ctx.lineTo(-cw/2, -ch*0.5);
+  ctx.lineTo(-cw*0.3, -ch*0.8);
+  ctx.lineTo(-cw*0.1, -ch*0.4);
+  ctx.lineTo(0, -ch);
+  ctx.lineTo(cw*0.1, -ch*0.4);
+  ctx.lineTo(cw*0.3, -ch*0.8);
+  ctx.lineTo(cw/2, -ch*0.5);
+  ctx.lineTo(cw/2, 0);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, -ch, 0, 0);
+  grad.addColorStop(0, '#FFD700');
+  grad.addColorStop(0.5, '#FFA500');
+  grad.addColorStop(1, '#FF8C00');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = '#B8860B';
+  ctx.lineWidth = fw * 0.015;
+  ctx.stroke();
+
+  // Jewels
+  const jewels = [
+    { x: 0, y: -ch*0.95, r: fw*0.04, c: '#FF1493' },
+    { x: -cw*0.3, y: -ch*0.75, r: fw*0.03, c: '#00CED1' },
+    { x: cw*0.3, y: -ch*0.75, r: fw*0.03, c: '#00CED1' },
+    { x: -cw*0.15, y: -ch*0.35, r: fw*0.025, c: '#FF4500' },
+    { x: cw*0.15, y: -ch*0.35, r: fw*0.025, c: '#FF4500' },
+  ];
+  jewels.forEach(j => {
+    ctx.beginPath();
+    ctx.arc(j.x, j.y, j.r, 0, Math.PI*2);
+    ctx.fillStyle = j.c;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(j.x - j.r*0.3, j.y - j.r*0.3, j.r*0.3, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+function drawFire(pts, fw, fh) {
+  const topY = Math.min(...pts.map(p => p.y));
+  const leftX = Math.min(...pts.map(p => p.x));
+  const rightX = Math.max(...pts.map(p => p.x));
+  const cx = scaleX((leftX + rightX) / 2);
+  const cy = scaleY(topY);
+  const t = Date.now() / 300;
+
+  ctx.save();
+  const numFlames = 6;
+  for (let i = 0; i < numFlames; i++) {
+    const offset = (i - numFlames/2) * fw * 0.14;
+    const wave = Math.sin(t + i * 1.3) * fw * 0.04;
+    const h = fh * (0.4 + Math.sin(t * 0.7 + i) * 0.1);
+
+    const gx = cx + offset + wave;
+    const gy = cy;
+    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy - h*0.5, h);
+    grad.addColorStop(0, 'rgba(255,255,100,0.95)');
+    grad.addColorStop(0.3, 'rgba(255,140,0,0.85)');
+    grad.addColorStop(0.7, 'rgba(255,30,0,0.6)');
+    grad.addColorStop(1, 'rgba(150,0,0,0)');
+
+    ctx.beginPath();
+    ctx.moveTo(gx - fw*0.07, gy);
+    ctx.bezierCurveTo(
+      gx - fw*0.1 + wave*0.5, gy - h*0.4,
+      gx + fw*0.05 + wave, gy - h*0.8,
+      gx + wave*0.3, gy - h
+    );
+    ctx.bezierCurveTo(
+      gx - fw*0.05, gy - h*0.8,
+      gx + fw*0.1 + wave*0.5, gy - h*0.4,
+      gx + fw*0.07, gy
+    );
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawNerdGlasses(leftEye, rightEye, fw) {
+  const lx = scaleX(leftEye.x);
+  const ly = scaleY(leftEye.y);
+  const rx = scaleX(rightEye.x);
+  const ry = scaleY(rightEye.y);
+  const r = fw * 0.15;
+  const angle = Math.atan2(ry - ly, rx - lx);
+
+  ctx.save();
+
+  // Thick black frames
+  [{ cx: lx, cy: ly }, { cx: rx, cy: ry }].forEach(pos => {
+    ctx.save();
+    ctx.translate(pos.cx, pos.cy);
+    ctx.rotate(angle);
+
+    // Frame
+    ctx.beginPath();
+    ctx.roundRect(-r, -r*0.8, r*2, r*1.6, r*0.15);
+    ctx.fillStyle = 'rgba(0,100,200,0.25)';
+    ctx.fill();
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = fw * 0.035;
+    ctx.stroke();
+
+    // Tape in middle (nerd detail) - only between lenses, skip per lens
+    ctx.restore();
+  });
+
+  // Bridge with tape
+  const midX = (lx + rx) / 2;
+  const midY = (ly + ry) / 2;
+  ctx.save();
+  ctx.translate(midX, midY);
+  ctx.rotate(angle);
+  ctx.fillStyle = '#f5f0e0';
+  ctx.fillRect(-fw*0.04, -fw*0.015, fw*0.08, fw*0.03);
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(-fw*0.04, -fw*0.015, fw*0.08, fw*0.03);
+  ctx.restore();
+
+  // Arms
+  const perpX = -Math.sin(angle);
+  const perpY = Math.cos(angle);
+  [[lx, ly, -1], [rx, ry, 1]].forEach(([x, y, dir]) => {
+    ctx.beginPath();
+    ctx.moveTo(x + dir * Math.cos(angle) * r, y + dir * Math.sin(angle) * r);
+    ctx.lineTo(x + dir * Math.cos(angle) * r * 2.8, y + dir * Math.sin(angle) * r * 2.8);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = fw * 0.03;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function drawBunny(pts, fw, fh) {
+  const topY = Math.min(...pts.map(p => p.y));
+  const leftX = Math.min(...pts.map(p => p.x));
+  const rightX = Math.max(...pts.map(p => p.x));
+  const cx = scaleX((leftX + rightX) / 2);
+  const cy = scaleY(topY);
+  const earW = fw * 0.12;
+  const earH = fh * 0.6;
+
+  // Ears
+  [[-fw*0.25, 0], [fw*0.25, 0]].forEach(([ox, oy]) => {
+    ctx.save();
+    ctx.translate(cx + ox, cy);
+
+    // Outer ear
+    ctx.beginPath();
+    ctx.ellipse(0, -earH/2, earW, earH/2, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fill();
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Inner ear (pink)
+    ctx.beginPath();
+    ctx.ellipse(0, -earH/2, earW*0.55, earH*0.4, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#ffb6c1';
+    ctx.fill();
+
+    ctx.restore();
+  });
+
+  // Nose
+  const noseTip = pts[30];
+  const nx = scaleX(noseTip.x);
+  const ny = scaleY(noseTip.y);
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(nx, ny, fw*0.04, fw*0.03, 0, 0, Math.PI*2);
+  ctx.fillStyle = '#ff69b4';
+  ctx.fill();
+  ctx.restore();
+
+  // Whiskers
+  ctx.save();
+  ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+  ctx.lineWidth = 1.5;
+  [[-1, -0.15], [-1, 0], [-1, 0.15], [1, -0.15], [1, 0], [1, 0.15]].forEach(([dir, ang]) => {
+    ctx.beginPath();
+    const angle = ang * Math.PI;
+    ctx.moveTo(nx, ny);
+    ctx.lineTo(nx + dir * fw * 0.25 * Math.cos(angle), ny + fw * 0.25 * Math.sin(angle));
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// =====================
+// Controls
+// =====================
+function setFilter(name) {
+  currentFilter = name;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === name);
+  });
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+async function flipCamera() {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+  await openCamera();
+}
+
+function capturePhoto() {
+  // Flash
+  const flash = document.getElementById('flash');
+  flash.classList.add('flash-anim');
+  setTimeout(() => flash.classList.remove('flash-anim'), 200);
+
+  // Composite video + canvas
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tctx = tempCanvas.getContext('2d');
+
+  // Draw video (accounting for mirror)
+  tctx.save();
+  if (facingMode === 'user') {
+    tctx.translate(tempCanvas.width, 0);
+    tctx.scale(-1, 1);
+  }
+  tctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+  tctx.restore();
+
+  // Draw overlays
+  tctx.drawImage(canvas, 0, 0);
+
+  lastCapturedCanvas = tempCanvas;
+  savePhoto();
+}
+
+function savePhoto() {
+  if (!lastCapturedCanvas) { capturePhoto(); return; }
+  const link = document.createElement('a');
+  link.download = `ar-photo-${Date.now()}.png`;
+  link.href = lastCapturedCanvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
