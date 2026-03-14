@@ -9,23 +9,36 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#000;font-family:'Rubik',sans-serif;overflow:hidden;height:100dvh;}
 #app{position:relative;width:100vw;height:100dvh;}
-#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
-#bg-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
-#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+/* z-index layers:
+   1 = bg-canvas (behind video)
+   2 = video
+   3 = color-filter (over video, under overlay)
+   4 = overlay (AR drawings)
+   20 = all UI chrome
+*/
+#bg-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);z-index:2;}
 #color-filter{position:absolute;inset:0;pointer-events:none;z-index:3;transition:opacity .3s;}
+#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;}
 
 /* TOP BAR */
 #topbar{position:absolute;top:0;left:0;right:0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);z-index:20;}
 #app-title{font-size:20px;font-weight:900;color:#fff;}
 #face-status{font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.13);padding:4px 11px;border-radius:20px;backdrop-filter:blur(8px);}
 
+/* BOTTOM AREA layout (from bottom up):
+   0–90px   = bottom-controls (צילום)
+   90–118px = intensity slider
+   118–150px = tab-bar
+   150–222px = filter-row (64px buttons + padding)
+*/
 /* TAB BAR */
-#tab-bar{position:absolute;bottom:178px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:20;padding:0 14px;}
+#tab-bar{position:absolute;bottom:118px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:20;padding:0 14px;}
 .tab-btn{flex:1;max-width:90px;padding:6px 0;border-radius:12px;border:none;background:rgba(15,15,25,.75);backdrop-filter:blur(10px);color:rgba(255,255,255,.7);font-family:'Rubik',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent;}
 .tab-btn.active{background:rgba(255,60,172,.28);color:#ff3cac;border:1.5px solid rgba(255,60,172,.5);}
 
 /* FILTER BARS */
-.filter-row{position:absolute;bottom:120px;left:0;right:0;display:none;gap:10px;padding:4px 14px;overflow-x:auto;scrollbar-width:none;z-index:20;flex-wrap:nowrap;}
+.filter-row{position:absolute;bottom:152px;left:0;right:0;display:none;gap:10px;padding:4px 14px;overflow-x:auto;scrollbar-width:none;z-index:20;flex-wrap:nowrap;}
 .filter-row.show{display:flex;}
 .filter-row::-webkit-scrollbar{display:none;}
 .fbtn{flex-shrink:0;width:64px;height:64px;border-radius:16px;border:2.5px solid rgba(255,255,255,.18);background:rgba(10,10,20,.75);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .18s;font-size:24px;-webkit-tap-highlight-color:transparent;}
@@ -33,7 +46,7 @@ body{background:#000;font-family:'Rubik',sans-serif;overflow:hidden;height:100dv
 .fbtn.active{border-color:#ff3cac;background:rgba(255,60,172,.22);box-shadow:0 0 14px rgba(255,60,172,.45);transform:scale(1.08);}
 
 /* INTENSITY SLIDER */
-#intensity-wrap{position:absolute;bottom:96px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;z-index:20;padding:0 28px;}
+#intensity-wrap{position:absolute;bottom:93px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;z-index:20;padding:0 28px;}
 #intensity-wrap.hidden{display:none;}
 #intensity-wrap span{font-size:18px;}
 #intensity{-webkit-appearance:none;appearance:none;flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,#ff3cac var(--val,70%),rgba(255,255,255,.2) var(--val,70%));outline:none;}
@@ -84,8 +97,8 @@ body{background:#000;font-family:'Rubik',sans-serif;overflow:hidden;height:100dv
     <div class="bar-wrap"><div id="progress-bar"></div></div>
   </div>
 
-  <video id="video" autoplay muted playsinline></video>
   <canvas id="bg-canvas"></canvas>
+  <video id="video" autoplay muted playsinline></video>
   <div id="color-filter"></div>
   <canvas id="overlay"></canvas>
   <div id="flash"></div>
